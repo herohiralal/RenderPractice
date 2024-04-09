@@ -1,16 +1,19 @@
-#include <iostream>
-
+#include "Core/Logging/Logging.h"
 #include "SDL.h"
+
+LOG_CATEGORY(Main)
+LOG_CATEGORY(SDL3)
 
 auto main(int argc, char** argv) -> int
 {
     if (0 != SDL_Init(SDL_InitFlags::SDL_INIT_VIDEO))
     {
-        std::cerr << "Error: " << SDL_GetError() << std::endl;
+        Debug::Log<LogMain>(LogLevel::Error, "Failed to initialize SDL2! Read next error for more info.");
+        Debug::Log<LogSDL3>(LogLevel::Error, SDL_GetError());
         return EXIT_FAILURE;
     }
 
-    std::cout << "Hello, World!" << std::endl;
+    Debug::Log<LogMain>("Hello, World!");
     SDL_Quit();
     return EXIT_SUCCESS;
 }

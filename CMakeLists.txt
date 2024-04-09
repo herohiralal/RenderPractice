@@ -5,7 +5,17 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(Plugins)
 
-add_executable(${PROJECT_NAME} Source/main.cpp)
+add_executable(${PROJECT_NAME}
+
+    ################### Core ###################
+
+    # Logging
+    Source/Core/Logging/Logging.cpp
+
+    ################### Main ###################
+    Source/main.cpp
+)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
 if (MSVC)
