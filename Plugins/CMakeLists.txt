@@ -8,7 +8,7 @@ set(SDL_STATIC ON)
 
 # Minimal SDL Usage
 set(SDL_AUDIO OFF)
-set(SDL_VIDEO OFF)
+set(SDL_VIDEO ON)
 set(SDL_RENDER OFF)
 set(SDL_CAMERA OFF)
 set(SDL_JOYSTICK OFF)
