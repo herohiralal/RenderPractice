@@ -11,7 +11,7 @@
                 "--config",
                 "Debug",
                 "--target",
-                "VulkanTest",
+                "RenderPractice",
                 "--"
             ],
             "group": {
