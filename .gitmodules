@@ -1,6 +1,0 @@
-[submodule "Plugins/Vulkan-Headers"]
-	path = Plugins/Vulkan-Headers
-	url = https://github.com/KhronosGroup/Vulkan-Headers.git
-[submodule "Plugins/SDL"]
-	path = Plugins/SDL
-	url = https://github.com/libsdl-org/SDL
