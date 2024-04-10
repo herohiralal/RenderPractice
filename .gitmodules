@@ -1,0 +1,6 @@
+[submodule "C++/Plugins/SDL"]
+	path = C++/Plugins/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "C++/Plugins/Vulkan-Headers"]
+	path = C++/Plugins/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
