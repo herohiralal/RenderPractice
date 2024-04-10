@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #define LOG_CATEGORY(categoryName)                         \
     class Log##categoryName                                \
     {                                                      \
@@ -7,7 +9,7 @@
         static constexpr const char* Name = #categoryName; \
     };
 
-enum class LogLevel
+enum class LogLevel : std::uint8_t
 {
     Info,
     Warning,

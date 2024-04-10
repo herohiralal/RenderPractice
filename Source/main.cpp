@@ -1,19 +1,32 @@
+#include "Core/Collections/FixedSizeBuffer.h"
 #include "Core/Logging/Logging.h"
-#include "SDL.h"
+#include "Core/Window/Window.h"
+
+struct AppState
+{
+    WindowSubsystemState windowSubsystem;
+};
 
 LOG_CATEGORY(Main)
-LOG_CATEGORY(SDL3)
 
-auto main(int argc, char** argv) -> int
+int main(int argc, char** argv)
 {
-    if (0 != SDL_Init(SDL_InitFlags::SDL_INIT_VIDEO))
+    AppState appState;
+    appState.windowSubsystem = WindowSubsystem::Create();
+
+    WindowRequirementBuffer windowRequirements;
     {
-        Debug::Log<LogMain>(LogLevel::Error, "Failed to initialize SDL2! Read next error for more info.");
-        Debug::Log<LogSDL3>(LogLevel::Error, SDL_GetError());
-        return EXIT_FAILURE;
+        windowRequirements.TryAdd({"Hello, World!", 800, 600});
+    }
+
+    while (true)
+    {
+        WindowSubsystem::Update(windowRequirements, appState.windowSubsystem);
+        windowRequirements.Clear();
+
+        if (0 == appState.windowSubsystem.windows.GetCount()) { break; }  // all windows closed
     }
 
     Debug::Log<LogMain>("Hello, World!");
-    SDL_Quit();
-    return EXIT_SUCCESS;
+    return 0;
 }

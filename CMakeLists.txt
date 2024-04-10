@@ -12,6 +12,17 @@ add_executable(${PROJECT_NAME}
     # Logging
     Source/Core/Logging/Logging.cpp
 
+    # Window
+    Source/Core/Window/Window.cpp
+
+    ################# Rendering ################
+
+    # Common
+    Source/Rendering/Graphics.cpp
+
+    # Vulkan
+    Source/Rendering/Vulkan/Vulkan.cpp
+
     ################### Main ###################
     Source/main.cpp
 )
@@ -25,3 +36,7 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Plugins)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    Source/
+)
