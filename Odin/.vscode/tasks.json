@@ -7,7 +7,9 @@
             "command": "odin",
             "args": [
                 "build",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "-debug",
+                "-out:build/${workspaceFolderBasename}.exe"
             ],
             "group": {
                 "kind": "build",
