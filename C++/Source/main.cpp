@@ -28,5 +28,7 @@ int main(int argc, char** argv)
     }
 
     Debug::Log<LogMain>("Hello, World!");
+
+    WindowSubsystem::Destroy(appState.windowSubsystem);
     return 0;
 }
