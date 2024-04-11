@@ -7,6 +7,10 @@
         {
             "name": "[C++]",
             "path": "C++"
+        },
+        {
+            "name": "[Odin]",
+            "path": "Odin"
         }
     ]
 }
