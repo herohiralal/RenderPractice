@@ -28,6 +28,6 @@ void Debug::Log(const char* category, const LogLevel level, const char* message)
         default:                fgColor = 39; break;                 // Default
     }
 
-    std::cerr << "\033[" << fgColor << "m" << "[" << category << "] " << "[" << levelStr << "] " << message << std::endl
+    std::cerr << "\033[" << fgColor << "m" << "[" << levelStr << "] " << "[" << category << "] " << message << std::endl
               << "\033[39m";
 }
