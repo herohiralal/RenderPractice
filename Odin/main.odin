@@ -3,27 +3,31 @@ package main
 import "core:fmt"
 import "vendor:sdl2"
 
+import "platform/collections"
 import "platform/debug"
+import "platform/window"
+
+AppState :: struct {
+    windowSubsystem: window.SubsystemState,
+}
 
 main :: proc() {
-    sdl2.Init(sdl2.INIT_VIDEO)
-    defer sdl2.Quit()
+    appState := AppState {
+        windowSubsystem = window.createSubsystem(),
+    }
 
-    window := sdl2.CreateWindow("Hello, World!", sdl2.WINDOWPOS_UNDEFINED, sdl2.WINDOWPOS_UNDEFINED, 800, 600, sdl2.WINDOW_SHOWN)
-    defer sdl2.DestroyWindow(window)
+    defer window.destroySubsystem(&appState.windowSubsystem)
+    defer debug.log("Main", debug.LogLevel.INFO, "Hello, World!")
 
-    debug.log(debug.LogLevel.ERROR, "Hello, World!")
+    windowRequirements: window.RequirementBuffer
+    collections.try_add(&windowRequirements.buffer, window.Requirement{title = "Hello, World!", width = 800, height = 600})
 
-    for quit := false; !quit; {
-        for e: sdl2.Event; sdl2.PollEvent(&e); {
-            #partial switch e.type {
-                case .QUIT:
-                    quit = true
-                case .KEYDOWN:
-                    if e.key.keysym.sym == .ESCAPE {
-                        quit = true
-                    }
-            }
+    for {
+        window.updateSubsystem(&windowRequirements, &appState.windowSubsystem)
+        collections.clear(&windowRequirements.buffer)
+
+        if 0 == collections.get_count(&appState.windowSubsystem.windows.buffer) {
+            break
         }
     }
 }
