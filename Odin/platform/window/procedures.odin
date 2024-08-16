@@ -41,9 +41,23 @@ updateSubsystem :: proc(requirements: ^RequirementBuffer, state: ^SubsystemState
             }
             defer delete(title)
 
+            windowState.ptr = sdl2.CreateWindow(
+                title,
+                sdl2.WINDOWPOS_UNDEFINED,
+                sdl2.WINDOWPOS_UNDEFINED,
+                requirement.width,
+                requirement.height,
+                sdl2.WINDOW_SHOWN | sdl2.WINDOW_VULKAN | sdl2.WINDOW_ALLOW_HIGHDPI,
+            )
+
+            if windowState.ptr == nil {
+                log_sdl_error()
+                continue
+            }
+
             windowState.valid = true
-            windowState.ptr = sdl2.CreateWindow(title, sdl2.WINDOWPOS_UNDEFINED, sdl2.WINDOWPOS_UNDEFINED, requirement.width, requirement.height, sdl2.WINDOW_SHOWN)
             collections.try_add(&state.windows.buffer, windowState)
+
         }
     }
 
@@ -77,6 +91,26 @@ updateSubsystem :: proc(requirements: ^RequirementBuffer, state: ^SubsystemState
                         }
                     }
                 }
+            } else if evt.type == sdl2.EventType.KEYDOWN {
+                windowPtr := sdl2.GetWindowFromID(evt.key.windowID)
+                if evt.key.keysym.sym == sdl2.Keycode.ESCAPE {
+                    count := u32(collections.get_count(&state.windows.buffer))
+                    for i: u32 = 0; i < count; i += 1 {
+                        windowState := collections.access(&state.windows.buffer, u64(i))
+                        if windowState.ptr == windowPtr {
+                            windowEvent: Event = ---
+                            windowEvent.type = EventType.Close
+                            windowEvent.close.windowId = i
+                            if !collections.try_add(&state.events.buffer, windowEvent) {
+                                debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add event")
+                            }
+                        }
+                    }
+                } else {
+                    // ignore for now
+                }
+            } else {
+                // ignore
             }
         }
     }
