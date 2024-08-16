@@ -7,9 +7,9 @@
             "command": "odin",
             "args": [
                 "build",
-                "${workspaceFolder}",
+                "${workspaceFolder}/src/",
                 "-debug",
-                "-out:build/${workspaceFolderBasename}.exe"
+                "-out:${workspaceFolder}/build/RenderPractice.exe"
             ],
             "group": {
                 "kind": "build",

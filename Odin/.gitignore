@@ -1,5 +1,0 @@
-# Exclude build/ folder
-build/**/*
-
-# Include build/vcs.txt
-!build/vcs.txt

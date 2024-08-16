@@ -5,11 +5,10 @@
             "name": "run",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/RenderPractice.exe",
+            "program": "${workspaceFolder}/build/RenderPractice",
             "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build"
+            "preLaunchTask": "build",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

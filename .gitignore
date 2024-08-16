@@ -1,1 +1,6 @@
-build/
+# Exclude build/ folder
+build/**/*
+
+# Include some items in build/ folder
+!build/vcs.txt
+!build/SDL2.dll
