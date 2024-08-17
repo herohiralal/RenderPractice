@@ -3,11 +3,12 @@ package window
 import "../collections"
 
 SubsystemState :: struct {
-    valid:        b8,
-    success:      b8,
-    requirements: WindowRequirementBuffer,
-    events:       WindowEventBuffer,
-    windows:      WindowStateBuffer,
+    valid:          b8,
+    success:        b8,
+    handleIterator: u64,
+    requirements:   WindowRequirementBuffer,
+    events:         WindowEventBuffer,
+    windows:        WindowStateBuffer,
 }
 
 WindowRequirementBuffer :: struct {
@@ -37,9 +38,10 @@ WindowEvent :: struct #raw_union {
 }
 
 WindowState :: struct {
-    valid: b8,
-    idx:   u32,
-    ptr:   rawptr,
+    handle: u64,
+    valid:  b8,
+    idx:    u32,
+    ptr:    rawptr,
 }
 
 WindowEventType :: enum u8 {

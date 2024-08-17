@@ -25,6 +25,19 @@ destroySubsystem :: proc(state: ^SubsystemState) {
 }
 
 updateSubsystem :: proc(state: ^SubsystemState) {
+
+    // remove any windows that are no longer valid
+    {
+        for i := u64(0); i < collections.get_count(&state.windows.buffer); i += 1 {
+            windowState := collections.access(&state.windows.buffer, i)
+            if !windowState.valid {
+                collections.try_erase_swap_back(&state.windows.buffer, i)
+                i -= 1
+                continue
+            }
+        }
+    }
+
     // create any new windows required
     {
         for i: u64 = 0; i < collections.get_count(&state.requirements.buffer); i += 1 {
@@ -35,7 +48,6 @@ updateSubsystem :: proc(state: ^SubsystemState) {
             }
 
             requirement := collections.access(&state.requirements.buffer, i)
-            windowState: WindowState = ---
             title, err := strings.clone_to_cstring(requirement.title)
             if err != nil {
                 debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to clone title")
@@ -43,7 +55,7 @@ updateSubsystem :: proc(state: ^SubsystemState) {
             }
             defer delete(title)
 
-            windowState.ptr = sdl2.CreateWindow(
+            sdlWindowPtr := sdl2.CreateWindow(
                 title,
                 sdl2.WINDOWPOS_UNDEFINED,
                 sdl2.WINDOWPOS_UNDEFINED,
@@ -52,13 +64,16 @@ updateSubsystem :: proc(state: ^SubsystemState) {
                 sdl2.WINDOW_SHOWN | sdl2.WINDOW_VULKAN | sdl2.WINDOW_ALLOW_HIGHDPI,
             )
 
-            if windowState.ptr == nil {
+            if sdlWindowPtr == nil {
                 log_sdl_error()
                 continue
             }
 
-            windowState.valid = true
-            collections.try_add(&state.windows.buffer, windowState)
+            state.handleIterator += 1
+            collections.try_add(
+                &state.windows.buffer,
+                WindowState{handle = state.handleIterator, valid = true, idx = 0, ptr = sdlWindowPtr},
+            )
 
         }
 
@@ -140,18 +155,6 @@ updateSubsystem :: proc(state: ^SubsystemState) {
                 sdl2.DestroyWindow((^sdl2.Window)(windowState.ptr))
                 windowState.valid = false
                 windowState.ptr = nil
-            }
-        }
-
-        // remove any that are no longer valid
-        for i: u64 = collections.get_count(&state.windows.buffer) - 1; true; i -= 1 {
-            windowState := collections.access(&state.windows.buffer, i)
-            if !windowState.valid {
-                collections.try_erase_swap_back(&state.windows.buffer, i)
-            }
-
-            if i == 0 {
-                break
             }
         }
     }
