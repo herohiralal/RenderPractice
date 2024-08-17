@@ -4,7 +4,6 @@ import "../collections"
 
 SubsystemState :: struct {
     valid:          b8,
-    success:        b8,
     handleIterator: u64,
     requirements:   WindowRequirementBuffer,
     events:         WindowEventBuffer,

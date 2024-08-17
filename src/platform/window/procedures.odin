@@ -8,19 +8,19 @@ import "vendor:sdl2"
 createSubsystem :: proc() -> SubsystemState {
     output: SubsystemState
     output.valid = (0 == sdl2.Init(sdl2.INIT_VIDEO))
-    output.success = output.valid
     output.requirements = WindowRequirementBuffer{}
     collections.try_add(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
     output.events = WindowEventBuffer{}
     output.windows = WindowStateBuffer{}
-    if !output.success do log_sdl_error()
+    if !output.valid do log_sdl_error()
     return output
 }
 
 destroySubsystem :: proc(state: ^SubsystemState) {
-    if state.valid do sdl2.Quit()
+    if state.valid {
+        sdl2.Quit()
+    }
     state.valid = false
-    state.success = false
     collections.clear(&state.events.buffer)
 }
 
