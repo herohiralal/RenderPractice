@@ -9,8 +9,8 @@ EventType :: enum u8 {
 Event :: struct #raw_union {
     type:  EventType,
     close: struct {
-        type:     EventType,
-        windowId: u32,
+        type:      EventType,
+        windowIdx: u32,
     },
 }
 
@@ -30,6 +30,7 @@ RequirementBuffer :: struct {
 
 State :: struct {
     valid: b8,
+    idx:   u32,
     ptr:   rawptr,
 }
 
