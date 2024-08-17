@@ -28,5 +28,5 @@ destroyAppState :: proc(state: ^AppState) {     // LIFO
 }
 
 shouldClose :: proc(state: ^AppState) -> bool {
-    return 0 == collections.get_count(&state.ssWindow.windows.buffer)
+    return 0 == collections.getCount(&state.ssWindow.windows.buffer)
 }
