@@ -2,45 +2,46 @@ package window
 
 import "../collections"
 
-EventType :: enum u8 {
-    Close,
+SubsystemState :: struct {
+    valid:        b8,
+    success:      b8,
+    requirements: WindowRequirementBuffer,
+    events:       WindowEventBuffer,
+    windows:      WindowStateBuffer,
 }
 
-Event :: struct #raw_union {
-    type:  EventType,
-    close: struct {
-        type:      EventType,
-        windowIdx: u32,
-    },
+WindowRequirementBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(WindowRequirement, 16),
 }
 
-EventBuffer :: struct {
-    buffer: collections.FixedSizeBuffer(Event, 64),
+WindowEventBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(WindowEvent, 64),
 }
 
-Requirement :: struct {
+WindowStateBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(WindowState, 16),
+}
+
+WindowRequirement :: struct {
     title:  string,
     width:  i32,
     height: i32,
 }
 
-RequirementBuffer :: struct {
-    buffer: collections.FixedSizeBuffer(Requirement, 16),
+WindowEvent :: struct #raw_union {
+    type:  WindowEventType,
+    close: struct {
+        type:      WindowEventType,
+        windowIdx: u32,
+    },
 }
 
-State :: struct {
+WindowState :: struct {
     valid: b8,
     idx:   u32,
     ptr:   rawptr,
 }
 
-StateBuffer :: struct {
-    buffer: collections.FixedSizeBuffer(State, 16),
-}
-
-SubsystemState :: struct {
-    valid:   b8,
-    success: b8,
-    events:  EventBuffer,
-    windows: StateBuffer,
+WindowEventType :: enum u8 {
+    Close,
 }
