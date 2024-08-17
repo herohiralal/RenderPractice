@@ -12,7 +12,10 @@ main :: proc() {
     defer destroyAppState(appState)
 
     for {
-        window.updateSubsystem(&appState.windowSubsystem)
+        window.createNewWindows(&appState.ssWindow)
+        window.pollEvents(&appState.ssWindow)
+        window.destroyClosedWindows(&appState.ssWindow)
+        window.removeInvalidWindows(&appState.ssWindow)
 
         if shouldClose(appState) {
             break

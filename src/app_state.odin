@@ -1,28 +1,32 @@
 package main
 
 import "platform/collections"
+import "platform/renderer"
 import "platform/window"
 
 AppState :: struct {
-    windowSubsystem: window.SubsystemState,
+    ssWindow:   window.SubsystemState,
+    ssRenderer: renderer.SubsystemState,
 }
 
 createAppState :: proc() -> ^AppState {
     output := new(AppState)
     output^ = AppState{}
 
-    output.windowSubsystem = window.createSubsystem()
+    output.ssWindow = window.createSubsystem()
+    output.ssRenderer = renderer.createSubsystem()
 
     return output
 }
 
 destroyAppState :: proc(state: ^AppState) {     // LIFO
 
-    window.destroySubsystem(&state.windowSubsystem)
+    renderer.destroySubsystem(&state.ssRenderer)
+    window.destroySubsystem(&state.ssWindow)
 
     free(state)
 }
 
 shouldClose :: proc(state: ^AppState) -> bool {
-    return 0 == collections.get_count(&state.windowSubsystem.windows.buffer)
+    return 0 == collections.get_count(&state.ssWindow.windows.buffer)
 }
