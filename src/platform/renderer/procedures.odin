@@ -1,5 +1,7 @@
 package renderer
 
+import "vendor:sdl2"
+
 createSubsystem :: proc() -> SubsystemState {
     return SubsystemState{}
 }

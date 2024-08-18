@@ -10,8 +10,15 @@ createSubsystem :: proc() -> SubsystemState {
     output.valid = (0 == sdl2.Init(sdl2.INIT_VIDEO))
     output.requirements = WindowRequirementBuffer{}
     collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
+    collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
+    collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
     output.events = WindowEventBuffer{}
     output.windows = WindowStateBuffer{}
+
+    // event buffers
+    output.createdWindows = WindowIndexBuffer{}
+    output.windowsToBeClosed = WindowIndexBuffer{}
+
     if !output.valid do log_sdl_error()
     return output
 }
@@ -25,6 +32,8 @@ destroySubsystem :: proc(state: ^SubsystemState) {
 }
 
 createNewWindows :: proc(state: ^SubsystemState) {
+    originalCount := collections.getCount(&state.windows.buffer)
+
     for i: u64 = 0; i < collections.getCount(&state.requirements.buffer); i += 1 {
 
         if collections.getCount(&state.windows.buffer) >= collections.getCapacity(&state.windows.buffer) {
@@ -67,14 +76,21 @@ createNewWindows :: proc(state: ^SubsystemState) {
     }
 
     collections.clear(&state.requirements.buffer) // all the requirements have been processed
+
+    // add the created windows to the createdWindows buffer
+    collections.clear(&state.createdWindows.buffer)
+    for i: u64 = originalCount; i < collections.getCount(&state.windows.buffer); i += 1 {
+        window := collections.access(&state.windows.buffer, i)
+        collections.tryAdd(&state.createdWindows.buffer, window.idx)
+    }
 }
 
 pollEvents :: proc(state: ^SubsystemState) {
 
-    windowMap: map[u32]^WindowState = ---
+    windowCount := collections.getCount(&state.windows.buffer)
+    windowMap := make(map[u32]^WindowState, windowCount)
     defer delete(windowMap)
 
-    windowMap = make(map[u32]^WindowState, collections.getCount(&state.windows.buffer))
     for i: u64 = 0; i < collections.getCount(&state.windows.buffer); i += 1 {
         window := collections.access(&state.windows.buffer, i)
         windowMap[sdl2.GetWindowID((^sdl2.Window)(window.ptr))] = window
@@ -86,34 +102,25 @@ pollEvents :: proc(state: ^SubsystemState) {
         if evt.type == sdl2.EventType.QUIT {
             count := u32(collections.getCount(&state.windows.buffer))
             for i: u32 = 0; i < count; i += 1 {
-                windowEvent: WindowEvent = ---
-                windowEvent.type = WindowEventType.Close
-                windowEvent.close.windowIdx = i
-                if !collections.tryAdd(&state.events.buffer, windowEvent) {
-                    debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add event")
+                if !collections.tryAdd(&state.windowsToBeClosed.buffer, i) {
+                    debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add window close event.")
                 }
             }
         } else if evt.type == sdl2.EventType.WINDOWEVENT {
             windowPtr := sdl2.GetWindowFromID(evt.window.windowID)
             if evt.window.event == sdl2.WindowEventID.CLOSE {
-                if window, success := windowMap[evt.window.windowID]; success {
-                    windowEvent: WindowEvent = ---
-                    windowEvent.type = WindowEventType.Close
-                    windowEvent.close.windowIdx = window.idx
-                    if !collections.tryAdd(&state.events.buffer, windowEvent) {
-                        debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add event")
+                if window, ok := windowMap[evt.window.windowID]; ok {
+                    if !collections.tryAdd(&state.windowsToBeClosed.buffer, window.idx) {
+                        debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add window close event.")
                     }
                 }
             }
         } else if evt.type == sdl2.EventType.KEYDOWN {
             windowPtr := sdl2.GetWindowFromID(evt.key.windowID)
             if evt.key.keysym.sym == sdl2.Keycode.ESCAPE {
-                if window, success := windowMap[evt.window.windowID]; success {
-                    windowEvent: WindowEvent = ---
-                    windowEvent.type = WindowEventType.Close
-                    windowEvent.close.windowIdx = window.idx
-                    if !collections.tryAdd(&state.events.buffer, windowEvent) {
-                        debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add event")
+                if window, ok := windowMap[evt.window.windowID]; ok {
+                    if !collections.tryAdd(&state.windowsToBeClosed.buffer, window.idx) {
+                        debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add window close event.")
                     }
                 }
             } else {
@@ -127,27 +134,42 @@ pollEvents :: proc(state: ^SubsystemState) {
 }
 
 destroyClosedWindows :: proc(state: ^SubsystemState) {
-    for i: u64 = 0; i < collections.getCount(&state.events.buffer); i += 1 {
-        event := collections.access(&state.events.buffer, i)
-        if event.type == WindowEventType.Close {
-            windowState := collections.access(&state.windows.buffer, u64(event.close.windowIdx))
-            sdl2.DestroyWindow((^sdl2.Window)(windowState.ptr))
-            windowState.valid = false
-            windowState.ptr = nil
-        }
+    for i: u64 = 0; i < collections.getCount(&state.windowsToBeClosed.buffer); i += 1 {
+        windowIdx := collections.access(&state.windowsToBeClosed.buffer, i)^
+        windowState := collections.access(&state.windows.buffer, u64(windowIdx))
+        sdl2.DestroyWindow((^sdl2.Window)(windowState.ptr))
+        windowState.valid = false
+        windowState.ptr = nil
     }
-}
 
-removeInvalidWindows :: proc(state: ^SubsystemState) {
+    collections.clear(&state.windowsToBeClosed.buffer)
+
+    // window remap
+    windowCount := collections.getCount(&state.windows.buffer)
+    windowMap := make(map[u32]u32, windowCount)
+    defer delete(windowMap)
+
+    // remove invalid windows
     for i := u64(0); i < collections.getCount(&state.windows.buffer); i += 1 {
         windowState := collections.access(&state.windows.buffer, i)
-        windowState.idx = u32(i)
-
         if !windowState.valid {
             collections.tryEraseSwapBack(&state.windows.buffer, i)
             i -= 1
             continue
         }
+
+        windowMap[windowState.idx] = u32(i)
+    }
+
+    // update the window indices
+    for i := u64(0); i < collections.getCount(&state.windows.buffer); i += 1 {
+        windowState := collections.access(&state.windows.buffer, i)
+        windowState.idx = windowMap[windowState.idx]
+    }
+
+    for i := u64(0); i < collections.getCount(&state.createdWindows.buffer); i += 1 {
+        windowIdx := collections.access(&state.createdWindows.buffer, i)^
+        collections.access(&state.windows.buffer, u64(windowIdx)).idx = windowMap[windowIdx]
     }
 }
 

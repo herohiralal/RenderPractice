@@ -3,11 +3,13 @@ package window
 import "../collections"
 
 SubsystemState :: struct {
-    valid:          b8,
-    handleIterator: u64,
-    requirements:   WindowRequirementBuffer,
-    events:         WindowEventBuffer,
-    windows:        WindowStateBuffer,
+    valid:             b8,
+    handleIterator:    u64,
+    requirements:      WindowRequirementBuffer,
+    events:            WindowEventBuffer,
+    windows:           WindowStateBuffer,
+    createdWindows:    WindowIndexBuffer,
+    windowsToBeClosed: WindowIndexBuffer,
 }
 
 WindowRequirementBuffer :: struct {
@@ -22,6 +24,10 @@ WindowStateBuffer :: struct {
     buffer: collections.FixedSizeBuffer(WindowState, 16),
 }
 
+WindowIndexBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(u32, 16),
+}
+
 WindowRequirement :: struct {
     title:  string,
     width:  i32,
@@ -29,11 +35,7 @@ WindowRequirement :: struct {
 }
 
 WindowEvent :: struct #raw_union {
-    type:  WindowEventType,
-    close: struct {
-        type:      WindowEventType,
-        windowIdx: u32,
-    },
+    type: WindowEventType,
 }
 
 WindowState :: struct {
@@ -43,6 +45,4 @@ WindowState :: struct {
     ptr:    rawptr,
 }
 
-WindowEventType :: enum u8 {
-    Close,
-}
+WindowEventType :: enum u8 {}
