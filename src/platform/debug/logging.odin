@@ -10,7 +10,7 @@ LogLevel :: enum {
     ERROR,
 }
 
-log_cat_lvl_msg :: proc(category: string, level: LogLevel, message: string) {
+log_cat_lvl_msg :: proc(category: string, level: LogLevel, fmtStr: string, args: ..any) {
 
     // color - uses defer statement, don't put in a scope
     fgColor: i32
@@ -71,19 +71,19 @@ log_cat_lvl_msg :: proc(category: string, level: LogLevel, message: string) {
         }
     }
 
-    fmt.printfln("%s", message)
+    fmt.printfln(fmtStr, ..args)
 }
 
-log_cat_msg :: proc(category: string, message: string) {
-    log_cat_lvl_msg(category, LogLevel.INFO, message)
+log_cat_msg :: proc(category: string, fmtStr: string, args: ..any) {
+    log_cat_lvl_msg(category, LogLevel.INFO, fmtStr, ..args)
 }
 
-log_lvl_msg :: proc(level: LogLevel, message: string) {
-    log_cat_lvl_msg("Default", level, message)
+log_lvl_msg :: proc(level: LogLevel, fmtStr: string, args: ..any) {
+    log_cat_lvl_msg("Default", level, fmtStr, ..args)
 }
 
-log_msg :: proc(message: string) {
-    log_cat_lvl_msg("Default", LogLevel.INFO, message)
+log_msg :: proc(fmtStr: string, args: ..any) {
+    log_cat_lvl_msg("Default", LogLevel.INFO, fmtStr, ..args)
 }
 
 log :: proc {
