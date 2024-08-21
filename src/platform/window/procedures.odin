@@ -10,8 +10,6 @@ createSubsystem :: proc() -> SubsystemState {
     output.valid = (0 == sdl2.Init(sdl2.INIT_VIDEO))
     output.requirements = WindowRequirementBuffer{}
     collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
-    collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
-    collections.tryAdd(&output.requirements.buffer, WindowRequirement{title = "Hello World!", width = 800, height = 600})
     output.events = WindowEventBuffer{}
     output.windows = WindowStateBuffer{}
 
