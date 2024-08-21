@@ -3,9 +3,11 @@ package renderer
 import "../collections"
 
 SubsystemState :: struct {
-    instance: rawptr,
-    devices:  PhysicalDeviceBuffer,
-    windows:  WindowStateBuffer,
+    instance:          rawptr,
+    selectedDeviceIdx: i32,
+    device:            Device,
+    devices:           PhysicalDeviceBuffer,
+    windows:           WindowStateBuffer,
 }
 
 WindowStateBuffer :: struct {
@@ -19,6 +21,12 @@ PhysicalDeviceBuffer :: struct {
 WindowState :: struct {
     handle:  u64,
     surface: u64,
+}
+
+Device :: struct {
+    device:        rawptr,
+    graphicsQueue: rawptr,
+    presentQueue:  rawptr,
 }
 
 PhysicalDevice :: struct {

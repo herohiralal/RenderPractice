@@ -66,16 +66,42 @@ createSubsystem :: proc() -> SubsystemState {
         state.instance = instance
     }
 
+    windowSurface: vulkan.SurfaceKHR = ---
+    if !sdl2.Vulkan_CreateSurface(tempWindow, instance, &windowSurface) {
+        panic("Failed to create window surface")
+    }
+    defer vulkan.DestroySurfaceKHR(instance, windowSurface, nil)
+
+    // pick device
     {
         physicalDeviceCount := u32(0)
-        vulkan.EnumeratePhysicalDevices(instance, &physicalDeviceCount, nil)
+        checkResult(vulkan.EnumeratePhysicalDevices(instance, &physicalDeviceCount, nil), "EnumeratePhysicalDevices")
         physicalDevices := make([]vulkan.PhysicalDevice, physicalDeviceCount)
         defer delete(physicalDevices)
-        vulkan.EnumeratePhysicalDevices(instance, &physicalDeviceCount, raw_data(physicalDevices))
+        checkResult(
+            vulkan.EnumeratePhysicalDevices(instance, &physicalDeviceCount, raw_data(physicalDevices)),
+            "EnumeratePhysicalDevices",
+        )
 
         for i := u32(0); i < physicalDeviceCount; i += 1 {
+            dev := physicalDevices[i]
+
+            properties: vulkan.PhysicalDeviceProperties = ---
+            vulkan.GetPhysicalDeviceProperties(dev, &properties)
+
+            if properties.deviceType != vulkan.PhysicalDeviceType.DISCRETE_GPU {
+                continue
+            }
+
+            features: vulkan.PhysicalDeviceFeatures = ---
+            vulkan.GetPhysicalDeviceFeatures(dev, &features)
+
+            if !features.geometryShader {
+                continue
+            }
+
             physicalDevice := PhysicalDevice {
-                device = rawptr(physicalDevices[i]),
+                device = rawptr(dev),
             }
 
             if !collections.tryAdd(&state.devices.buffer, physicalDevice) {
@@ -83,12 +109,121 @@ createSubsystem :: proc() -> SubsystemState {
                 break
             }
         }
+
+        if physicalDeviceCount == 0 {
+            debug.log("VulkanRenderer", debug.LogLevel.ERROR, "No physical devices found")
+        }
+
+        state.selectedDeviceIdx = 0
+    }
+
+    // pick queues
+    graphicsIndex, presentIndex := -1, -1
+    {
+        physicalDevice := vulkan.PhysicalDevice(collections.access(&state.devices.buffer, u64(state.selectedDeviceIdx)).device)
+
+        queueFamilyCount := u32(0)
+        vulkan.GetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nil)
+        queueFamilies := make([]vulkan.QueueFamilyProperties, queueFamilyCount)
+        defer delete(queueFamilies)
+        vulkan.GetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, raw_data(queueFamilies))
+
+        for i := u32(0); i < queueFamilyCount; i += 1 {
+            queueFamily := queueFamilies[i]
+
+            if queueFamily.queueCount > 0 && .GRAPHICS in queueFamily.queueFlags {
+                graphicsIndex = int(i)
+            }
+
+            surfaceSupported: b32 = false
+            vulkan.GetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, windowSurface, &surfaceSupported)
+            if queueFamily.queueCount > 0 && surfaceSupported {
+                presentIndex = int(i)
+            }
+
+            if graphicsIndex != -1 && presentIndex != -1 {
+                break
+            }
+        }
+
+        if graphicsIndex == -1 || presentIndex == -1 {
+            panic("Failed to find graphics and present queues")
+        }
+    }
+
+    {
+        physicalDevice := vulkan.PhysicalDevice(collections.access(&state.devices.buffer, u64(state.selectedDeviceIdx)).device)
+
+        enabledLayers := []cstring{}
+        extensions := []cstring{vulkan.KHR_SWAPCHAIN_EXTENSION_NAME}
+        queuePriority := []f32{1}
+        uniqueQueueIndices: collections.FixedSizeBuffer(u32, 2)
+        if graphicsIndex == presentIndex {
+            uniqueQueueIndices.count = 1
+            uniqueQueueIndices.buffer[0] = u32(graphicsIndex)
+        } else {
+            uniqueQueueIndices.count = 2
+            uniqueQueueIndices.buffer[0] = u32(graphicsIndex)
+            uniqueQueueIndices.buffer[1] = u32(presentIndex)
+        }
+
+        queueCreateInfos: collections.FixedSizeBuffer(vulkan.DeviceQueueCreateInfo, 2)
+        for i in 0 ..< uniqueQueueIndices.count {
+            if !collections.tryAdd(
+                &queueCreateInfos,
+                vulkan.DeviceQueueCreateInfo {
+                    sType = vulkan.StructureType.DEVICE_QUEUE_CREATE_INFO,
+                    pNext = nil,
+                    flags = {},
+                    queueFamilyIndex = uniqueQueueIndices.buffer[i],
+                    queueCount = 1,
+                    pQueuePriorities = raw_data(queuePriority),
+                },
+            ) {
+                debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to add queue create info to buffer")
+            }
+        }
+
+        physicalDeviceFeatures := vulkan.PhysicalDeviceFeatures {
+            geometryShader    = true,
+            samplerAnisotropy = true,
+        }
+
+        deviceCreateInfo := vulkan.DeviceCreateInfo {
+            sType                   = vulkan.StructureType.DEVICE_CREATE_INFO,
+            pNext                   = nil,
+            flags                   = {},
+            queueCreateInfoCount    = u32(queueCreateInfos.count),
+            pQueueCreateInfos       = &queueCreateInfos.buffer[0],
+            enabledLayerCount       = u32(len(enabledLayers)),
+            ppEnabledLayerNames     = raw_data(enabledLayers),
+            enabledExtensionCount   = u32(len(extensions)),
+            ppEnabledExtensionNames = raw_data(extensions),
+            pEnabledFeatures        = &physicalDeviceFeatures,
+        }
+
+        device: vulkan.Device = ---
+        vulkan.CreateDevice(physicalDevice, &deviceCreateInfo, nil, &device)
+        vulkan.load_proc_addresses_device(device)
+
+        graphicsQueue, presentQueue := vulkan.Queue{}, vulkan.Queue{}
+        vulkan.GetDeviceQueue(device, u32(graphicsIndex), 0, &graphicsQueue)
+        vulkan.GetDeviceQueue(device, u32(presentIndex), 0, &presentQueue)
+
+        state.device = Device {
+            device        = rawptr(device),
+            graphicsQueue = rawptr(graphicsQueue),
+            presentQueue  = rawptr(presentQueue),
+        }
     }
 
     return state
 }
 
 destroySubsystem :: proc(state: ^SubsystemState) {
+    vulkan.DestroyDevice(vulkan.Device(state.device.device), nil)
+    state.device = Device{}
+
     collections.clear(&state.devices.buffer)
     state.devices = PhysicalDeviceBuffer{}
 
