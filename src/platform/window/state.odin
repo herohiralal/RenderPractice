@@ -36,6 +36,7 @@ WindowRequirement :: struct {
 
 WindowEvent :: struct #raw_union {
     type: WindowEventType,
+    // placeholderEvt: WindowPlaceHolderEvt,
 }
 
 WindowState :: struct {
@@ -46,3 +47,7 @@ WindowState :: struct {
 }
 
 WindowEventType :: enum u8 {}
+// WindowPlaceHolderEvt :: struct {
+//     type: WindowEventType,
+//     // more fields...
+// }

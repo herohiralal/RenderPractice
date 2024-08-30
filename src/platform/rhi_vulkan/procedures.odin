@@ -1,4 +1,4 @@
-package renderer
+package rhi_vulkan
 
 import "../collections"
 import "../debug"

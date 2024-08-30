@@ -1,12 +1,12 @@
 package main
 
 import "platform/collections"
-import "platform/renderer"
+import "platform/rhi"
 import "platform/window"
 
 AppState :: struct {
     ssWindow:   window.SubsystemState,
-    ssRenderer: renderer.SubsystemState,
+    ssRenderer: rhi.SubsystemState,
 }
 
 createAppState :: proc() -> ^AppState {
@@ -14,14 +14,14 @@ createAppState :: proc() -> ^AppState {
     output^ = AppState{}
 
     output.ssWindow = window.createSubsystem()
-    output.ssRenderer = renderer.createSubsystem()
+    output.ssRenderer = rhi.createSubsystem(.Vulkan)
 
     return output
 }
 
 destroyAppState :: proc(state: ^AppState) {     // LIFO
 
-    renderer.destroySubsystem(&state.ssRenderer)
+    rhi.destroySubsystem(&state.ssRenderer)
     window.destroySubsystem(&state.ssWindow)
 
     free(state)
