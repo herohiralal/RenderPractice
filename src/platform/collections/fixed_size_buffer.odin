@@ -65,3 +65,14 @@ tryEraseSwapBack :: proc(buffer: ^$T/FixedSizeBuffer, index: u64) -> bool {
 tryAdd :: proc(buffer: ^$T/FixedSizeBuffer, value: $T2) -> bool {
     return tryInsertAt(buffer, buffer.count, value)
 }
+
+find :: proc(buffer: ^$T/FixedSizeBuffer($T2, $N), searchPayload: $T3, query: proc(item: T2, payload: T3) -> bool) -> ^T2 {
+    for i := u64(0); i < buffer.count; i += 1 {
+        item := access(buffer, i)
+        if query(item^, searchPayload) {
+            return item
+        }
+    }
+
+    return nil
+}
