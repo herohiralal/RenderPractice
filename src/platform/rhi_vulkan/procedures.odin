@@ -406,7 +406,10 @@ updateSubsystem :: proc(windowState: ^window.SubsystemState, state: ^SubsystemSt
             }
         }
 
-        if !collections.tryAdd(&state.windows.buffer, WindowState{handle = windowState.handle, surface = u64(surface)}) {
+        if !collections.tryAdd(
+            &state.windows.buffer,
+            WindowState{handle = windowState.handle, surface = u64(surface), swapchain = u64(swapchain)},
+        ) {
             debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to add window state to buffer")
             break
         }
@@ -659,5 +662,6 @@ updateSubsystem :: proc(windowState: ^window.SubsystemState, state: ^SubsystemSt
                 )
             }
         }
+
     }
 }
