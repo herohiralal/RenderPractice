@@ -10,6 +10,8 @@ import "vendor:sdl2"
 import vk "vendor:vulkan"
 
 createSubsystem :: proc() -> SubsystemState {
+    compileShader("triangle")
+
     state := SubsystemState{}
 
     {
@@ -303,7 +305,7 @@ updateSubsystem :: proc(windowState: ^window.SubsystemState, state: ^SubsystemSt
         vk.BeginCommandBuffer(cmdBuff^, &cmdBuffBeginInfo)
         {
             clearValues := [?]vk.ClearValue {
-                {color = {float32 = {0.5, 0.0, 0.5, 1.0}}},
+                {color = {float32 = {0.0, 0.0, 0.0, 1.0}}},
                 {depthStencil = {depth = 1.0, stencil = 0}},
             }
             renderPassBeginInfo := vk.RenderPassBeginInfo {
