@@ -15,16 +15,19 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
 
     vertShdName := fmt.sbprintf(&srcBuilder, "src/shaders/%s/exec.vert", name)
     if os.exists(vertShdName) {
-        vertShdInf, vShStInfErr := os.stat(vertShdName, context.temp_allocator)
-
         vertSpvName := fmt.sbprintf(&dstBuilder, "build/%s.vert.spv", name)
         shouldProcess := true
+        {
+            vertShdInf, vShStInfErr := os.stat(vertShdName, context.temp_allocator)
+            defer os.file_info_delete(vertShdInf, context.temp_allocator)
 
-        if os.exists(vertSpvName) {
-            vertSpvInf, vSpStInfErr := os.stat(vertSpvName, context.temp_allocator)
-            if vShStInfErr == nil && vSpStInfErr == nil {
-                if vertShdInf.modification_time._nsec < vertSpvInf.modification_time._nsec {
-                    shouldProcess = false
+            if os.exists(vertSpvName) {
+                vertSpvInf, vSpStInfErr := os.stat(vertSpvName, context.temp_allocator)
+                defer os.file_info_delete(vertSpvInf, context.temp_allocator)
+                if vShStInfErr == nil && vSpStInfErr == nil {
+                    if vertShdInf.modification_time._nsec < vertSpvInf.modification_time._nsec {
+                        shouldProcess = false
+                    }
                 }
             }
         }
@@ -62,16 +65,20 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
 
     fragShdName := fmt.sbprintf(&srcBuilder, "src/shaders/%s/exec.frag", name)
     if os.exists(fragShdName) {
-        fragShdInf, fShStInfErr := os.stat(fragShdName, context.temp_allocator)
 
         fragSpvName := fmt.sbprintf(&dstBuilder, "build/%s.frag.spv", name)
         shouldProcess := true
+        {
+            fragShdInf, fShStInfErr := os.stat(fragShdName, context.temp_allocator)
+            defer os.file_info_delete(fragShdInf, context.temp_allocator)
 
-        if os.exists(fragSpvName) {
-            fragSpvInf, fSpStInfErr := os.stat(fragSpvName, context.temp_allocator)
-            if fShStInfErr == nil && fSpStInfErr == nil {
-                if fragShdInf.modification_time._nsec < fragSpvInf.modification_time._nsec {
-                    shouldProcess = false
+            if os.exists(fragSpvName) {
+                fragSpvInf, fSpStInfErr := os.stat(fragSpvName, context.temp_allocator)
+                defer os.file_info_delete(fragSpvInf, context.temp_allocator)
+                if fShStInfErr == nil && fSpStInfErr == nil {
+                    if fragShdInf.modification_time._nsec < fragSpvInf.modification_time._nsec {
+                        shouldProcess = false
+                    }
                 }
             }
         }
