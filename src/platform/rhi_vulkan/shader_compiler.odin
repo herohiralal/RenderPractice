@@ -4,6 +4,7 @@ import "../debug"
 import "core:fmt"
 import os "core:os/os2"
 import "core:strings"
+import "core:time"
 
 compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
     srcBacking: [1024]byte = ---
@@ -13,35 +14,97 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
     dstBuilder := strings.builder_from_bytes(dstBacking[:])
 
     vertShdName := fmt.sbprintf(&srcBuilder, "src/shaders/%s/exec.vert", name)
-    vertSpvName := fmt.sbprintf(&dstBuilder, "build/%s.vert.spv", name)
-    vertCmd := [?]string{"glslc", vertShdName, "-o", vertSpvName}
-    state, stdout, stderr, err := os.process_exec({command = vertCmd[:]}, context.allocator)
+    if os.exists(vertShdName) {
+        vertShdInf, vShStInfErr := os.stat(vertShdName, context.temp_allocator)
 
-    logLevel := debug.LogLevel.INFO
-    if state.exit_code != 0 {
-        logLevel = debug.LogLevel.ERROR
+        vertSpvName := fmt.sbprintf(&dstBuilder, "build/%s.vert.spv", name)
+        shouldProcess := true
+
+        if os.exists(vertSpvName) {
+            vertSpvInf, vSpStInfErr := os.stat(vertSpvName, context.temp_allocator)
+            if vShStInfErr == nil && vSpStInfErr == nil {
+                if vertShdInf.modification_time._nsec < vertSpvInf.modification_time._nsec {
+                    shouldProcess = false
+                }
+            }
+        }
+
+        if shouldProcess {
+            vertCmd := [?]string{"glslc", vertShdName, "-o", vertSpvName}
+            state, stdout, stderr, err := os.process_exec({command = vertCmd[:]}, context.allocator)
+
+            logLevel := debug.LogLevel.INFO
+            if state.exit_code != 0 {
+                logLevel = debug.LogLevel.ERROR
+            }
+            if len(stdout) > 0 {
+                debug.log("VulkanRenderer", logLevel, "Shader compilation STDOUT: %s", string(stdout))
+            }
+            if len(stderr) > 0 {
+                debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
+            }
+        } else {
+            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Skipping shader compilation for: %s", vertShdName)
+        }
+
+        err: os.Error = ---
+        vert, err = os.read_entire_file(vertSpvName, context.allocator)
+        if err != nil {
+            vert = nil
+            debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to read vertex shader file: %s", vertSpvName)
+        }
+    } else {
+        vert = nil
+        debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Vertex shader file not found: %s", vertShdName)
     }
-    debug.log("VulkanRenderer", logLevel, "Shader compilation STDOUT: %s", string(stdout))
-    debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
-
-    vert, err = os.read_entire_file(vertSpvName, context.allocator)
 
     strings.builder_reset(&srcBuilder)
     strings.builder_reset(&dstBuilder)
 
     fragShdName := fmt.sbprintf(&srcBuilder, "src/shaders/%s/exec.frag", name)
-    fragSpvName := fmt.sbprintf(&dstBuilder, "build/%s.frag.spv", name)
-    fragCmd := [?]string{"glslc", fragShdName, "-o", fragSpvName}
-    state, stdout, stderr, err = os.process_exec({command = fragCmd[:]}, context.allocator)
+    if os.exists(fragShdName) {
+        fragShdInf, fShStInfErr := os.stat(fragShdName, context.temp_allocator)
 
-    logLevel = debug.LogLevel.INFO
-    if state.exit_code != 0 {
-        logLevel = debug.LogLevel.ERROR
+        fragSpvName := fmt.sbprintf(&dstBuilder, "build/%s.frag.spv", name)
+        shouldProcess := true
+
+        if os.exists(fragSpvName) {
+            fragSpvInf, fSpStInfErr := os.stat(fragSpvName, context.temp_allocator)
+            if fShStInfErr == nil && fSpStInfErr == nil {
+                if fragShdInf.modification_time._nsec < fragSpvInf.modification_time._nsec {
+                    shouldProcess = false
+                }
+            }
+        }
+
+        if shouldProcess {
+            fragCmd := [?]string{"glslc", fragShdName, "-o", fragSpvName}
+            state, stdout, stderr, err := os.process_exec({command = fragCmd[:]}, context.allocator)
+
+            logLevel := debug.LogLevel.INFO
+            if state.exit_code != 0 {
+                logLevel = debug.LogLevel.ERROR
+            }
+            if len(stdout) > 0 {
+                debug.log("VulkanRenderer", logLevel, "Shader compilation STDOUT: %s", string(stdout))
+            }
+            if len(stderr) > 0 {
+                debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
+            }
+        } else {
+            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Skipping shader compilation for: %s", fragShdName)
+        }
+
+        err: os.Error = ---
+        frag, err = os.read_entire_file(fragSpvName, context.allocator)
+        if err != nil {
+            frag = nil
+            debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to read fragment shader file: %s", fragSpvName)
+        }
+    } else {
+        frag = nil
+        debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Fragment shader file not found: %s", fragShdName)
     }
-    debug.log("VulkanRenderer", logLevel, "Shader compilation STDOUT: %s", string(stdout))
-    debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
-
-    frag, err = os.read_entire_file(fragSpvName, context.allocator)
 
     return
 }
