@@ -9,6 +9,7 @@ SubsystemState :: struct {
     events:            WindowEventBuffer,
     windows:           WindowStateBuffer,
     createdWindows:    WindowIndexBuffer,
+    resizedWindows:    WindowIndexBuffer,
     windowsToBeClosed: WindowIndexBuffer,
 }
 

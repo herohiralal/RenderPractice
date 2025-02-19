@@ -8,6 +8,24 @@ checkResult :: proc(result: vulkan.Result, fnName: string) {
     switch result {
         case vulkan.Result.SUCCESS:
             return
+        case vulkan.Result.PIPELINE_BINARY_MISSING_KHR:
+            debug.log(
+                "VulkanRenderer",
+                debug.LogLevel.ERROR,
+                "Failure on calling Vulkan API [%s]: [%s].",
+                fnName,
+                "PIPELINE_BINARY_MISSING_KHR",
+            )
+            break
+        case vulkan.Result.ERROR_NOT_ENOUGH_SPACE_KHR:
+            debug.log(
+                "VulkanRenderer",
+                debug.LogLevel.ERROR,
+                "Failure on calling Vulkan API [%s]: [%s].",
+                fnName,
+                "ERROR_NOT_ENOUGH_SPACE_KHR",
+            )
+            break
         case vulkan.Result.NOT_READY:
             debug.log(
                 "VulkanRenderer",

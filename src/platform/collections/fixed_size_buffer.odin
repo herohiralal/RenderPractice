@@ -75,33 +75,40 @@ tryAdd :: proc(buffer: ^$T/FixedSizeBuffer, value: $T2) -> bool {
     return tryInsertAt(buffer, buffer.count, value)
 }
 
-findWithoutPayload :: proc(buffer: ^$T/FixedSizeBuffer($T2, $N), query: proc(item: T2) -> bool) -> ^T2 {
-    for i := u64(0); i < buffer.count; i += 1 {
-        item := access(buffer, i)
-        if query(item^) {
-            return item
-        }
-    }
-
-    return nil
-}
-
-findWithPayload :: proc(
+searchWithPayload :: proc(
     buffer: ^$T/FixedSizeBuffer($T2, $N),
-    searchPayload: $T3,
-    query: proc(item: T2, payload: T3) -> bool,
-) -> ^T2 {
+    query: $T3/proc(item: T2, payload: $T4) -> bool,
+    payload: T4,
+) -> (
+    u64,
+    bool,
+) #optional_ok {
     for i := u64(0); i < buffer.count; i += 1 {
-        item := access(buffer, i)
-        if query(item^, searchPayload) {
-            return item
+        if query(buffer.buffer[i], payload) {
+            return i, true
         }
     }
 
-    return nil
+    return 0, false
 }
 
-find :: proc {
-    findWithoutPayload,
-    findWithPayload,
+searchWithoutPayload :: proc(
+    buffer: ^$T/FixedSizeBuffer($T2, $N),
+    query: $T3/proc(item: T2) -> bool,
+) -> (
+    u64,
+    bool,
+) #optional_ok {
+    for i := u64(0); i < buffer.count; i += 1 {
+        if query(buffer.buffer[i]) {
+            return i, true
+        }
+    }
+
+    return 0, false
+}
+
+search :: proc {
+    searchWithPayload,
+    searchWithoutPayload,
 }

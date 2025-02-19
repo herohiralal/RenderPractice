@@ -17,7 +17,7 @@ createSubsystem :: proc() -> SubsystemState {
     output.createdWindows = WindowIndexBuffer{}
     output.windowsToBeClosed = WindowIndexBuffer{}
 
-    if !output.valid do log_sdl_error()
+    if !output.valid do logSDLError()
     return output
 }
 
@@ -57,7 +57,7 @@ createNewWindows :: proc(state: ^SubsystemState) {
         )
 
         if sdlWindowPtr == nil {
-            log_sdl_error()
+            logSDLError()
             continue
         }
 
@@ -110,6 +110,12 @@ pollEvents :: proc(state: ^SubsystemState) {
                 if window, ok := windowMap[evt.window.windowID]; ok {
                     if !collections.tryAdd(&state.windowsToBeClosed.buffer, window.idx) {
                         debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add window close event.")
+                    }
+                }
+            } else if evt.window.event == sdl2.WindowEventID.RESIZED {
+                if window, ok := windowMap[evt.window.windowID]; ok {
+                    if !collections.tryAdd(&state.resizedWindows.buffer, window.idx) {
+                        debug.log("Window Subsystem", debug.LogLevel.ERROR, "Failed to add window resize event.")
                     }
                 }
             }
@@ -172,7 +178,7 @@ destroyClosedWindows :: proc(state: ^SubsystemState) {
 }
 
 @(private = "file")
-log_sdl_error :: proc() {
+logSDLError :: proc() {
     error := sdl2.GetErrorString()
     debug.log("Window Subsystem", debug.LogLevel.ERROR, sdl2.GetErrorString())
 }
