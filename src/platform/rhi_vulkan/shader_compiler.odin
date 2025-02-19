@@ -30,6 +30,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         }
 
         if shouldProcess {
+            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Compiling vertex shader: %s", vertShdName)
             vertCmd := [?]string{"glslc", vertShdName, "-o", vertSpvName}
             state, stdout, stderr, err := os.process_exec({command = vertCmd[:]}, context.allocator)
 
@@ -43,8 +44,6 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
             if len(stderr) > 0 {
                 debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
             }
-        } else {
-            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Skipping shader compilation for: %s", vertShdName)
         }
 
         err: os.Error = ---
@@ -78,6 +77,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         }
 
         if shouldProcess {
+            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Compiling fragment shader: %s", fragShdName)
             fragCmd := [?]string{"glslc", fragShdName, "-o", fragSpvName}
             state, stdout, stderr, err := os.process_exec({command = fragCmd[:]}, context.allocator)
 
@@ -91,8 +91,6 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
             if len(stderr) > 0 {
                 debug.log("VulkanRenderer", logLevel, "Shader compilation STDERR: %s", string(stderr))
             }
-        } else {
-            debug.log("VulkanRenderer", debug.LogLevel.INFO, "Skipping shader compilation for: %s", fragShdName)
         }
 
         err: os.Error = ---
