@@ -23,6 +23,7 @@ WindowState :: struct {
     handle:                  u64,
     surface:                 u64,
     swapchain:               u64,
+    width, height:           u32,
     swapchainImageViews:     ImageViewBuffer,
     swapchainFences:         FencesBuffer,
     depthImage:              u64,
@@ -32,6 +33,7 @@ WindowState :: struct {
     commandBuffers:          CommandBufferBuffer,
     imageAvailableSemaphore: u64,
     renderFinishedSemaphore: u64,
+    frameIdx:                u32,
 }
 
 ImageViewBuffer :: struct {

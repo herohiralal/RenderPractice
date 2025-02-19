@@ -191,7 +191,13 @@ initializeNewWindows :: proc(windowState: ^window.SubsystemState, state: ^Subsys
 
         if !collections.tryAdd(
             &state.windows.buffer,
-            WindowState{handle = windowState.handle, surface = u64(surface), swapchain = u64(swapchain)},
+            WindowState {
+                handle = windowState.handle,
+                surface = u64(surface),
+                swapchain = u64(swapchain),
+                width = width,
+                height = height,
+            },
         ) {
             debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to add window state to buffer")
             break

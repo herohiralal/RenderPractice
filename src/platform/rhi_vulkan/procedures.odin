@@ -263,4 +263,96 @@ updateSubsystem :: proc(windowState: ^window.SubsystemState, state: ^SubsystemSt
     shutdownWindowsToBeClosed(windowState, state)
     initializeNewWindows(windowState, state)
     processResizedWindows(windowState, state)
+
+    for i := u64(0); i < state.windows.buffer.count; i += 1 {
+        rendererWindowState := collections.access(&state.windows.buffer, i)
+
+        vk.AcquireNextImageKHR(
+            vk.Device(state.device.device),
+            vk.SwapchainKHR(rendererWindowState.swapchain),
+            c.UINT64_MAX,
+            vk.Semaphore(rendererWindowState.imageAvailableSemaphore),
+            vk.Fence(0),
+            &rendererWindowState.frameIdx,
+        )
+
+        fence := (^vk.Fence)(
+            collections.access(&rendererWindowState.swapchainFences.buffer, u64(rendererWindowState.frameIdx)),
+        )
+        vk.WaitForFences(vk.Device(state.device.device), 1, fence, false, c.UINT64_MAX)
+        vk.ResetFences(vk.Device(state.device.device), 1, fence)
+
+        cmdBuff := (^vk.CommandBuffer)(
+            collections.access(&rendererWindowState.commandBuffers.buffer, u64(rendererWindowState.frameIdx)),
+        )
+        image := (^vk.ImageView)(
+            collections.access(&rendererWindowState.swapchainImageViews.buffer, u64(rendererWindowState.frameIdx)),
+        )
+        frameBuff := (^vk.Framebuffer)(
+            collections.access(&rendererWindowState.framebuffers.buffer, u64(rendererWindowState.frameIdx)),
+        )
+
+        vk.ResetCommandBuffer(cmdBuff^, {})
+
+        cmdBuffBeginInfo := vk.CommandBufferBeginInfo {
+            sType            = .COMMAND_BUFFER_BEGIN_INFO,
+            pNext            = nil,
+            flags            = {.SIMULTANEOUS_USE},
+            pInheritanceInfo = nil,
+        }
+        vk.BeginCommandBuffer(cmdBuff^, &cmdBuffBeginInfo)
+        {
+            clearValues := [?]vk.ClearValue {
+                {color = {float32 = {0.5, 0.0, 0.5, 1.0}}},
+                {depthStencil = {depth = 1.0, stencil = 0}},
+            }
+            renderPassBeginInfo := vk.RenderPassBeginInfo {
+                sType = .RENDER_PASS_BEGIN_INFO,
+                pNext = nil,
+                renderPass = vk.RenderPass(rendererWindowState.renderPass),
+                framebuffer = frameBuff^,
+                renderArea = {
+                    offset = {x = 0, y = 0},
+                    extent = {width = rendererWindowState.width, height = rendererWindowState.height},
+                },
+                clearValueCount = len(clearValues),
+                pClearValues = raw_data(&clearValues),
+            }
+
+            vk.CmdBeginRenderPass(cmdBuff^, &renderPassBeginInfo, .INLINE)
+            {
+                // TODO: more rendering?
+            }
+            vk.CmdEndRenderPass(cmdBuff^)
+        }
+        vk.EndCommandBuffer(cmdBuff^)
+
+        submitInfo := vk.SubmitInfo {
+            sType                = .SUBMIT_INFO,
+            pNext                = nil,
+            waitSemaphoreCount   = 1,
+            pWaitSemaphores      = (^vk.Semaphore)(&rendererWindowState.imageAvailableSemaphore),
+            pWaitDstStageMask    = &vk.PipelineStageFlags{.TRANSFER},
+            commandBufferCount   = 1,
+            pCommandBuffers      = cmdBuff,
+            signalSemaphoreCount = 1,
+            pSignalSemaphores    = (^vk.Semaphore)(&rendererWindowState.renderFinishedSemaphore),
+        }
+
+        vk.QueueSubmit(vk.Queue(state.device.graphicsQueue), 1, &submitInfo, fence^)
+
+        presentInfo := vk.PresentInfoKHR {
+            sType              = .PRESENT_INFO_KHR,
+            pNext              = nil,
+            waitSemaphoreCount = 1,
+            pWaitSemaphores    = (^vk.Semaphore)(&rendererWindowState.renderFinishedSemaphore),
+            swapchainCount     = 1,
+            pSwapchains        = (^vk.SwapchainKHR)(&rendererWindowState.swapchain),
+            pImageIndices      = &rendererWindowState.frameIdx,
+            pResults           = nil,
+        }
+
+        vk.QueuePresentKHR(vk.Queue(state.device.presentQueue), &presentInfo)
+        vk.QueueWaitIdle(vk.Queue(state.device.presentQueue))
+    }
 }
