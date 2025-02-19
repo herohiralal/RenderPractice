@@ -8,6 +8,7 @@ SubsystemState :: struct {
     device:            Device,
     physicalDevices:   PhysicalDeviceBuffer,
     windows:           WindowStateBuffer,
+    commandPool:       u64,
 }
 
 WindowStateBuffer :: struct {
@@ -19,21 +20,33 @@ PhysicalDeviceBuffer :: struct {
 }
 
 WindowState :: struct {
-    handle:              u64,
-    surface:             u64,
-    swapchain:           u64,
-    swapchainImageViews: ImageViewBuffer,
-    depthImage:          u64,
-    depthImageView:      u64,
-    renderPass:          u64, // TODO: figure out what render pass???
-    framebuffers:        FramebufferBuffer,
+    handle:                  u64,
+    surface:                 u64,
+    swapchain:               u64,
+    swapchainImageViews:     ImageViewBuffer,
+    swapchainFences:         FencesBuffer,
+    depthImage:              u64,
+    depthImageView:          u64,
+    renderPass:              u64, // TODO: figure out what render pass???
+    framebuffers:            FramebufferBuffer,
+    commandBuffers:          CommandBufferBuffer,
+    imageAvailableSemaphore: u64,
+    renderFinishedSemaphore: u64,
 }
 
 ImageViewBuffer :: struct {
     buffer: collections.FixedSizeBuffer(u64, 32),
 }
 
+FencesBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(u64, 32),
+}
+
 FramebufferBuffer :: struct {
+    buffer: collections.FixedSizeBuffer(u64, 32),
+}
+
+CommandBufferBuffer :: struct {
     buffer: collections.FixedSizeBuffer(u64, 32),
 }
 
