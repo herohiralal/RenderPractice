@@ -180,6 +180,8 @@ initializeNewWindows :: proc(windowState: ^window.SubsystemState, state: ^Subsys
                         swapchainCreateInfo.pQueueFamilyIndices = raw_data(&queueFamilyIndices)
                     } else {
                         swapchainCreateInfo.imageSharingMode = .EXCLUSIVE
+                        swapchainCreateInfo.queueFamilyIndexCount = 0
+                        swapchainCreateInfo.pQueueFamilyIndices = nil
                     }
 
                     checkResult(

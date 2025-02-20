@@ -169,7 +169,11 @@ createSubsystem :: proc() -> SubsystemState {
             collections.access(&state.physicalDevices.buffer, u64(state.selectedDeviceIdx)).device,
         )
 
-        enabledLayers := []cstring{}
+        when ODIN_DEBUG {
+            enabledLayers := []cstring{"VK_LAYER_KHRONOS_validation"}
+        } else {
+            enabledLayers := []cstring{}
+        }
         extensions := []cstring{vk.KHR_SWAPCHAIN_EXTENSION_NAME}
         queuePriority := []f32{1}
         uniqueQueueIndices: collections.FixedSizeBuffer(u32, 2)
