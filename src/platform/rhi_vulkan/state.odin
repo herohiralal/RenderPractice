@@ -9,6 +9,7 @@ SubsystemState :: struct {
     physicalDevices:   PhysicalDeviceBuffer,
     windows:           WindowStateBuffer,
     commandPool:       u64,
+    shaders:           Shaders,
 }
 
 WindowStateBuffer :: struct {
@@ -62,4 +63,12 @@ Device :: struct {
 
 PhysicalDevice :: struct {
     device: rawptr,
+}
+
+Shaders :: struct {
+    triangle: Shader,
+}
+
+Shader :: struct {
+    vs, fs: u64,
 }

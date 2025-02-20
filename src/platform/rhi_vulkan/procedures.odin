@@ -10,8 +10,6 @@ import "vendor:sdl2"
 import vk "vendor:vulkan"
 
 createSubsystem :: proc() -> SubsystemState {
-    compileShader("triangle")
-
     state := SubsystemState{}
 
     {
@@ -244,10 +242,16 @@ createSubsystem :: proc() -> SubsystemState {
         state.commandPool = u64(commandPool)
     }
 
+    {     // shaders
+        state.shaders.triangle = compileShader(vk.Device(state.device.device), "triangle")
+    }
+
     return state
 }
 
 destroySubsystem :: proc(state: ^SubsystemState) {
+    clearShader(vk.Device(state.device.device), &state.shaders.triangle)
+
     vk.DestroyCommandPool(vk.Device(state.device.device), vk.CommandPool(state.commandPool), nil)
     state.commandPool = 0
 

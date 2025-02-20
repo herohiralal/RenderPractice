@@ -16,7 +16,11 @@ main :: proc() {
     defer context.allocator = destroyMemTracker(&memTracker)
 
     appState := createAppState()
-    defer destroyAppState(appState)
+    free_all(context.temp_allocator)
+    defer {
+        destroyAppState(appState)
+        free_all(context.temp_allocator)
+    }
 
     for {
         defer free_all(context.temp_allocator)
