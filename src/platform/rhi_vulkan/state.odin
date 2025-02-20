@@ -28,6 +28,7 @@ WindowState :: struct {
     swapchainImageViews:     ImageViewBuffer,
     swapchainFences:         FencesBuffer,
     depthImage:              u64,
+    depthImageMemory:        u64,
     depthImageView:          u64,
     renderPass:              u64, // TODO: figure out what render pass???
     framebuffers:            FramebufferBuffer,
