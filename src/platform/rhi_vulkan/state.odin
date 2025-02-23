@@ -9,6 +9,7 @@ SubsystemState :: struct {
     physicalDevices:   PhysicalDeviceBuffer,
     windows:           WindowStateBuffer,
     commandPool:       u64,
+    shaders:           Shaders,
 }
 
 WindowStateBuffer :: struct {
@@ -27,6 +28,7 @@ WindowState :: struct {
     swapchainImageViews:     ImageViewBuffer,
     swapchainFences:         FencesBuffer,
     depthImage:              u64,
+    depthImageMemory:        u64,
     depthImageView:          u64,
     renderPass:              u64, // TODO: figure out what render pass???
     framebuffers:            FramebufferBuffer,
@@ -62,4 +64,12 @@ Device :: struct {
 
 PhysicalDevice :: struct {
     device: rawptr,
+}
+
+Shaders :: struct {
+    triangle: Shader,
+}
+
+Shader :: struct {
+    vs, fs: u64,
 }

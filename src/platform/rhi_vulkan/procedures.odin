@@ -10,8 +10,6 @@ import "vendor:sdl2"
 import vk "vendor:vulkan"
 
 createSubsystem :: proc() -> SubsystemState {
-    compileShader("triangle")
-
     state := SubsystemState{}
 
     {
@@ -29,9 +27,9 @@ createSubsystem :: proc() -> SubsystemState {
         "temp window to get instance extensions",
         0,
         0,
-        800,
-        600,
-        sdl2.WINDOW_VULKAN | sdl2.WINDOW_ALLOW_HIGHDPI | sdl2.WINDOW_SHOWN,
+        16,
+        16,
+        sdl2.WINDOW_VULKAN | sdl2.WINDOW_ALLOW_HIGHDPI | sdl2.WINDOW_MINIMIZED,
     )
     defer sdl2.DestroyWindow(tempWindow)
 
@@ -39,7 +37,7 @@ createSubsystem :: proc() -> SubsystemState {
     {
         extensionsCount := u32(0)
         sdl2.Vulkan_GetInstanceExtensions((^sdl2.Window)(tempWindow), &extensionsCount, nil)
-        extensions := make([]cstring, extensionsCount)
+        extensions := make([]cstring, extensionsCount + 5) // for good measure
         defer delete(extensions)
         sdl2.Vulkan_GetInstanceExtensions((^sdl2.Window)(tempWindow), &extensionsCount, raw_data(extensions))
 
@@ -63,6 +61,12 @@ createSubsystem :: proc() -> SubsystemState {
             ppEnabledLayerNames     = nil,
             enabledExtensionCount   = extensionsCount,
             ppEnabledExtensionNames = raw_data(extensions),
+        }
+
+        when ODIN_DEBUG {
+            debugLayers := []cstring{"VK_LAYER_KHRONOS_validation"}
+            instanceInfo.enabledLayerCount = u32(len(debugLayers))
+            instanceInfo.ppEnabledLayerNames = raw_data(debugLayers)
         }
 
         checkResult(vk.CreateInstance(&instanceInfo, nil, &instance), "CreateInstance")
@@ -165,7 +169,11 @@ createSubsystem :: proc() -> SubsystemState {
             collections.access(&state.physicalDevices.buffer, u64(state.selectedDeviceIdx)).device,
         )
 
-        enabledLayers := []cstring{}
+        when ODIN_DEBUG {
+            enabledLayers := []cstring{"VK_LAYER_KHRONOS_validation"}
+        } else {
+            enabledLayers := []cstring{}
+        }
         extensions := []cstring{vk.KHR_SWAPCHAIN_EXTENSION_NAME}
         queuePriority := []f32{1}
         uniqueQueueIndices: collections.FixedSizeBuffer(u32, 2)
@@ -244,10 +252,16 @@ createSubsystem :: proc() -> SubsystemState {
         state.commandPool = u64(commandPool)
     }
 
+    {     // shaders
+        state.shaders.triangle = compileShader(vk.Device(state.device.device), "triangle")
+    }
+
     return state
 }
 
 destroySubsystem :: proc(state: ^SubsystemState) {
+    clearShader(vk.Device(state.device.device), &state.shaders.triangle)
+
     vk.DestroyCommandPool(vk.Device(state.device.device), vk.CommandPool(state.commandPool), nil)
     state.commandPool = 0
 

@@ -5,8 +5,67 @@ import "core:fmt"
 import os "core:os/os2"
 import "core:strings"
 import "core:time"
+import vk "vendor:vulkan"
 
-compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
+compileShader :: proc(device: vk.Device, name: string) -> Shader {
+    vert, frag := getShaderData(name)
+    defer {
+        delete(vert, context.temp_allocator)
+        delete(frag, context.temp_allocator)
+    }
+
+    vertShader: vk.ShaderModule = ---
+    checkResult(
+        vk.CreateShaderModule(
+            device,
+            &vk.ShaderModuleCreateInfo {
+                sType = .SHADER_MODULE_CREATE_INFO,
+                pNext = nil,
+                flags = {},
+                codeSize = len(vert),
+                pCode = (^u32)(raw_data(vert)),
+            },
+            nil,
+            &vertShader,
+        ),
+        "CreateShaderModule",
+    )
+
+    fragShader: vk.ShaderModule = ---
+    checkResult(
+        vk.CreateShaderModule(
+            device,
+            &vk.ShaderModuleCreateInfo {
+                sType = .SHADER_MODULE_CREATE_INFO,
+                pNext = nil,
+                flags = {},
+                codeSize = len(frag),
+                pCode = (^u32)(raw_data(frag)),
+            },
+            nil,
+            &fragShader,
+        ),
+        "CreateShaderModule",
+    )
+
+    return Shader{vs = u64(vertShader), fs = u64(fragShader)}
+}
+
+clearShader :: proc(device: vk.Device, shd: ^Shader) {
+    if shd != nil {
+        vertShader := vk.ShaderModule(shd.vs)
+        fragShader := vk.ShaderModule(shd.fs)
+
+        vk.DestroyShaderModule(device, vertShader, nil)
+        vk.DestroyShaderModule(device, fragShader, nil)
+
+        shd.vs = 0
+        shd.fs = 0
+    }
+}
+
+@(private = "file")
+getShaderData :: proc(name: string) -> (vert: []byte, frag: []byte) {
     srcBacking: [1024]byte = ---
     srcBuilder := strings.builder_from_bytes(srcBacking[:])
 
@@ -35,7 +94,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         if shouldProcess {
             debug.log("VulkanRenderer", debug.LogLevel.INFO, "Compiling vertex shader: %s", vertShdName)
             vertCmd := [?]string{"glslc", vertShdName, "-o", vertSpvName}
-            state, stdout, stderr, err := os.process_exec({command = vertCmd[:]}, context.allocator)
+            state, stdout, stderr, err := os.process_exec({command = vertCmd[:]}, context.temp_allocator)
 
             logLevel := debug.LogLevel.INFO
             if state.exit_code != 0 {
@@ -50,7 +109,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         }
 
         err: os.Error = ---
-        vert, err = os.read_entire_file(vertSpvName, context.allocator)
+        vert, err = os.read_entire_file(vertSpvName, context.temp_allocator)
         if err != nil {
             vert = nil
             debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to read vertex shader file: %s", vertSpvName)
@@ -86,7 +145,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         if shouldProcess {
             debug.log("VulkanRenderer", debug.LogLevel.INFO, "Compiling fragment shader: %s", fragShdName)
             fragCmd := [?]string{"glslc", fragShdName, "-o", fragSpvName}
-            state, stdout, stderr, err := os.process_exec({command = fragCmd[:]}, context.allocator)
+            state, stdout, stderr, err := os.process_exec({command = fragCmd[:]}, context.temp_allocator)
 
             logLevel := debug.LogLevel.INFO
             if state.exit_code != 0 {
@@ -101,7 +160,7 @@ compileShader :: proc(name: string) -> (vert: []byte, frag: []byte) {
         }
 
         err: os.Error = ---
-        frag, err = os.read_entire_file(fragSpvName, context.allocator)
+        frag, err = os.read_entire_file(fragSpvName, context.temp_allocator)
         if err != nil {
             frag = nil
             debug.log("VulkanRenderer", debug.LogLevel.ERROR, "Failed to read fragment shader file: %s", fragSpvName)

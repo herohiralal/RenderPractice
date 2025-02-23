@@ -45,6 +45,7 @@ shutdownWindowsToBeClosed :: proc(windowState: ^window.SubsystemState, state: ^S
         vk.DestroyRenderPass(vk.Device(state.device.device), vk.RenderPass(rendererWindowState.renderPass), nil)
         vk.DestroyImageView(vk.Device(state.device.device), vk.ImageView(rendererWindowState.depthImageView), nil)
         vk.DestroyImage(vk.Device(state.device.device), vk.Image(rendererWindowState.depthImage), nil)
+        vk.FreeMemory(vk.Device(state.device.device), vk.DeviceMemory(rendererWindowState.depthImageMemory), nil)
         for i := u64(0); i < collections.getCount(&rendererWindowState.swapchainFences.buffer); i += 1 {
             fence := collections.access(&rendererWindowState.swapchainFences.buffer, i)^
             vk.DestroyFence(vk.Device(state.device.device), vk.Fence(fence), nil)
@@ -179,6 +180,8 @@ initializeNewWindows :: proc(windowState: ^window.SubsystemState, state: ^Subsys
                         swapchainCreateInfo.pQueueFamilyIndices = raw_data(&queueFamilyIndices)
                     } else {
                         swapchainCreateInfo.imageSharingMode = .EXCLUSIVE
+                        swapchainCreateInfo.queueFamilyIndexCount = 0
+                        swapchainCreateInfo.pQueueFamilyIndices = nil
                     }
 
                     checkResult(
@@ -312,12 +315,21 @@ initializeNewWindows :: proc(windowState: ^window.SubsystemState, state: ^Subsys
                 memoryTypeIndex = memTypeIndex,
             }
 
-            depthImageMemory: vk.DeviceMemory = ---
             checkResult(
-                vk.AllocateMemory(vk.Device(state.device.device), &allocInfo, nil, &depthImageMemory),
+                vk.AllocateMemory(
+                    vk.Device(state.device.device),
+                    &allocInfo,
+                    nil,
+                    (^vk.DeviceMemory)(&rendererWindowState.depthImageMemory),
+                ),
                 "AllocateMemory",
             )
-            vk.BindImageMemory(vk.Device(state.device.device), depthImage, depthImageMemory, 0)
+            vk.BindImageMemory(
+                vk.Device(state.device.device),
+                depthImage,
+                vk.DeviceMemory(rendererWindowState.depthImageMemory),
+                0,
+            )
 
             imageViewCreateInfo := vk.ImageViewCreateInfo {
                 sType = .IMAGE_VIEW_CREATE_INFO,
