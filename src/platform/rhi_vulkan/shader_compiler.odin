@@ -48,17 +48,34 @@ compileShader :: proc(device: vk.Device, name: string) -> Shader {
         "CreateShaderModule",
     )
 
-    return Shader{vs = u64(vertShader), fs = u64(fragShader)}
+    pipelineLayoutCreateInfo := vk.PipelineLayoutCreateInfo {
+        sType                  = .PIPELINE_LAYOUT_CREATE_INFO,
+        pNext                  = nil,
+        flags                  = {},
+        setLayoutCount         = 0,
+        pSetLayouts            = nil,
+        pushConstantRangeCount = 0,
+        pPushConstantRanges    = nil,
+    }
+
+    pipelineLayout: vk.PipelineLayout = ---
+    checkResult(vk.CreatePipelineLayout(device, &pipelineLayoutCreateInfo, nil, &pipelineLayout), "CreatePipelineLayout")
+
+    return Shader{vs = u64(vertShader), fs = u64(fragShader), layout = u64(pipelineLayout)}
 }
 
 clearShader :: proc(device: vk.Device, shd: ^Shader) {
     if shd != nil {
-        vertShader := vk.ShaderModule(shd.vs)
-        fragShader := vk.ShaderModule(shd.fs)
+        pipelineLayout := vk.PipelineLayout(shd.layout)
+        vk.DestroyPipelineLayout(device, pipelineLayout, nil)
 
+        vertShader := vk.ShaderModule(shd.vs)
         vk.DestroyShaderModule(device, vertShader, nil)
+
+        fragShader := vk.ShaderModule(shd.fs)
         vk.DestroyShaderModule(device, fragShader, nil)
 
+        shd.layout = 0
         shd.vs = 0
         shd.fs = 0
     }

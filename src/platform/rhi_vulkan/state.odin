@@ -72,4 +72,5 @@ Shaders :: struct {
 
 Shader :: struct {
     vs, fs: u64,
+    layout: u64,
 }
