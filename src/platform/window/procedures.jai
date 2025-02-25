@@ -156,6 +156,10 @@ destroyClosedWindows :: (state: *WindowSubsystemState) {
 
     // remove invalid windows
     for i: 0..(state.windows.num - 1) {
+        if state.windows.num == 0 {
+            break;
+        }
+
         window := access(*state.windows, i);
         if !window.valid {
             tryEraseSwapBack(*state.windows, i);
