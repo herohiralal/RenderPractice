@@ -2,12 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "run",
+            "name": "run (jai)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/RenderPractice",
+            "args": [],
+            "preLaunchTask": "build (jai)",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "run (odin)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/RenderPractice",
             "args": [],
-            "preLaunchTask": "build",
+            "preLaunchTask": "build (odin)",
             "cwd": "${workspaceFolder}"
         }
     ]

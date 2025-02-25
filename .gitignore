@@ -4,3 +4,13 @@ build/**/*
 # Include some items in build/ folder
 !build/vcs.txt
 !build/SDL2.dll
+
+# Exclude bin/ folder
+bin/**/*
+
+# Include some items in bin/ folder
+!bin/vcs.txt
+
+# Exclude temp/ folder
+temp/
+src/.build/
