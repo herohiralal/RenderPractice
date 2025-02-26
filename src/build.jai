@@ -21,6 +21,21 @@
     add_build_file("platform/window/state.jai", w);
     add_build_file("platform/window/procedures.jai", w);
 
+    // rhi
+    add_build_file("platform/rhi/state.jai", w);
+    add_build_file("platform/rhi/procedures.jai", w);
+
+    // directx
+    add_build_file("platform/rhi_directx/state.jai", w);
+    add_build_file("platform/rhi_directx/procedures.jai", w);
+
+    // vulkan
+    add_build_file("platform/rhi_vulkan/state.jai", w);
+    add_build_file("platform/rhi_vulkan/procedures.jai", w);
+    add_build_file("platform/rhi_vulkan/errors.jai", w);
+    add_build_file("platform/rhi_vulkan/shader_compiler.jai", w);
+    add_build_file("platform/rhi_vulkan/window_lifetime.jai", w);
+
     // entry point
     add_build_file("app_state.jai", w);
     add_build_file("main.jai", w);
