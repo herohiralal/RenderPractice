@@ -10,6 +10,9 @@ bin/**/*
 
 # Include some items in bin/ folder
 !bin/vcs.txt
+!bin/SDL2.dll
+!bin/libSDL2.dylib
+!bin/libSDL2.so
 
 # Exclude temp/ folder
 temp/
