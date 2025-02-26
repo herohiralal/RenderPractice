@@ -1,3 +1,5 @@
+vk :: #import "Vulkan";
+
 createVulkanSubsystem :: () -> VulkanSubsystemState { return .{}; }
 
 destroyVulkanSubsystem :: (state: *VulkanSubsystemState) { }
