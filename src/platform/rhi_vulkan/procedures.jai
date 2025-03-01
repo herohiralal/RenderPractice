@@ -1,7 +1,62 @@
-vk :: #import "Vulkan";
+#import "Basic";
+#import "Vulkan";
+#import "SDL";
 
-createVulkanSubsystem :: () -> VulkanSubsystemState { return .{}; }
+SDL_Vulkan_GetInstanceExtensions :: (window: *SDL_Window, pCount: *u32, pNames: **u8) -> s32 #foreign SDL2;
 
-destroyVulkanSubsystem :: (state: *VulkanSubsystemState) { }
+createVulkanSubsystem :: () -> VulkanSubsystemState {
+    state: VulkanSubsystemState;
+
+    tempWindow := SDL_CreateWindow(
+        "temp window to get instance extensions",
+        0,
+        0,
+        16,
+        16,
+        .SDL_WINDOW_VULKAN | .SDL_WINDOW_ALLOW_HIGHDPI | .SDL_WINDOW_MINIMIZED,
+    );
+    defer SDL_DestroyWindow(tempWindow);
+
+    instance: VkInstance = ---;
+    {
+        extensionsCount: u32 = 0;
+        SDL_Vulkan_GetInstanceExtensions(tempWindow, *extensionsCount, null);
+        extensions: []*u8 = NewArray(extensionsCount, *u8,, allocator = temp);
+        defer array_free(extensions);
+
+        appInfo: VkApplicationInfo = .{
+            sType = .VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            pNext = null,
+            pApplicationName = "RenderPractice",
+            applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+            pEngineName = "No Engine",
+            engineVersion = VK_MAKE_VERSION(1, 0, 0),
+            apiVersion = VK_API_VERSION_1_0,
+        };
+
+        instanceInfo: VkInstanceCreateInfo = .{
+            sType = .VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            pNext = null,
+            flags = 0,
+            pApplicationInfo = *appInfo,
+            enabledLayerCount = 0,
+            ppEnabledLayerNames = null,
+            enabledExtensionCount = extensionsCount,
+            ppEnabledExtensionNames = extensions.data,
+        };
+
+        debugLayers: *u8 = "VK_LAYER_KHRONOS_validation";
+        instanceInfo.enabledLayerCount = 1;
+        instanceInfo.ppEnabledLayerNames = *debugLayers;
+
+        checkResult(vkCreateInstance(*instanceInfo, null, *instance), "vkCreateInstance");
+        state.instance = instance;
+    }
+}
+
+destroyVulkanSubsystem :: (state: *VulkanSubsystemState) {
+    vkDestroyInstance(state.instance, null);
+    state.instance = null;
+}
 
 updateVulkanSubsystem :: (windowState: *WindowSubsystemState, state: *VulkanSubsystemState) { }
