@@ -13,6 +13,7 @@ bin/**/*
 !bin/SDL2.dll
 !bin/libSDL2.dylib
 !bin/libSDL2.so
+!bin/vulkan-1.dll
 
 # Exclude temp/ folder
 temp/

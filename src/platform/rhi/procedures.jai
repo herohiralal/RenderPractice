@@ -2,7 +2,7 @@ getCurrentGraphicsAPI :: () -> GraphicsAPI {
     return .Vulkan;
 }
 
-createSubsystem :: (api: GraphicsAPI) -> RhiSubsystemState {
+createRhiSubsystem :: (api: GraphicsAPI) -> RhiSubsystemState {
     result := RhiSubsystemState.{
         api = api,
     };
@@ -17,7 +17,7 @@ createSubsystem :: (api: GraphicsAPI) -> RhiSubsystemState {
     return result;
 }
 
-destroySubsystem :: (state: *RhiSubsystemState) {
+destroyRhiSubsystem :: (state: *RhiSubsystemState) {
     if state.api == {
     case .Vulkan;
         destroyVulkanSubsystem(*state.graphicsAPIState.vulkan);
@@ -26,13 +26,13 @@ destroySubsystem :: (state: *RhiSubsystemState) {
     }
 }
 
-updateSubsystem :: (windowState: *WindowSubsystemState, state: *RhiSubsystemState) {
+updateRhiSubsystem :: (windowState: *WindowSubsystemState, state: *RhiSubsystemState) {
     // change api if changed
     {
         newApi := getCurrentGraphicsAPI();
         if newApi != state.api {
-            destroySubsystem(state);
-            <<state = createSubsystem(newApi);
+            destroyRhiSubsystem(state);
+            <<state = createRhiSubsystem(newApi);
         }
     }
 

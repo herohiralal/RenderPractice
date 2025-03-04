@@ -17,15 +17,30 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
     );
     defer SDL_DestroyWindow(tempWindow);
 
+    {
+        extension_count: u32;
+        vkEnumerateInstanceExtensionProperties(null, *extension_count, null);
+        extension_array := NewArray(extension_count, VkExtensionProperties,, allocator = temp);
+        vkEnumerateInstanceExtensionProperties(null, *extension_count, extension_array.data);
+        print("Vulkan extensions:\n");
+        for ext: extension_array {
+            print("  % (%)\n", to_string(ext.extensionName.data), ext.specVersion);
+        }
+    }
+
     instance: VkInstance = ---;
     {
         extensionsCount: u32 = 0;
         SDL_Vulkan_GetInstanceExtensions(tempWindow, *extensionsCount, null);
         extensions: []*u8 = NewArray(extensionsCount, *u8,, allocator = temp);
-        defer array_free(extensions);
+        SDL_Vulkan_GetInstanceExtensions(tempWindow, *extensionsCount, extensions.data);
+        print("Required Vulkan extensions:\n");
+        for ext: extensions {
+            print("  %\n", to_string(ext));
+        }
 
         appInfo: VkApplicationInfo = .{
-            sType = .VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            sType = .APPLICATION_INFO,
             pNext = null,
             pApplicationName = "RenderPractice",
             applicationVersion = VK_MAKE_VERSION(1, 0, 0),
@@ -35,7 +50,7 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
         };
 
         instanceInfo: VkInstanceCreateInfo = .{
-            sType = .VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            sType = .INSTANCE_CREATE_INFO,
             pNext = null,
             flags = 0,
             pApplicationInfo = *appInfo,
@@ -45,13 +60,16 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
             ppEnabledExtensionNames = extensions.data,
         };
 
-        debugLayers: *u8 = "VK_LAYER_KHRONOS_validation";
-        instanceInfo.enabledLayerCount = 1;
-        instanceInfo.ppEnabledLayerNames = *debugLayers;
+        debugLayers := *u8.["VK_LAYER_KHRONOS_validation"];
+        instanceInfo.enabledLayerCount = debugLayers.count;
+        instanceInfo.ppEnabledLayerNames = debugLayers.data;
 
-        checkResult(vkCreateInstance(*instanceInfo, null, *instance), "vkCreateInstance");
+        instRes := vkCreateInstance(*instanceInfo, null, *instance);
+        checkResult(instRes, "vkCreateInstance");
         state.instance = instance;
     }
+
+    return state;
 }
 
 destroyVulkanSubsystem :: (state: *VulkanSubsystemState) {
