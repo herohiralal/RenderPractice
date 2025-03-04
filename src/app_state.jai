@@ -1,21 +1,26 @@
 AppState :: struct {
-    ssWindow: WindowSubsystemState;
-    ssRenderer: RhiSubsystemState;
+    ssWindow: window.SubsystemState;
+    ssRenderer: rhi.SubsystemState;
 }
 
 createAppState :: () -> *AppState {
     output := New(AppState);
-    output.ssWindow = createWindowSubsystem();
-    output.ssRenderer = createRhiSubsystem(getCurrentGraphicsAPI());
+    output.ssWindow = window.createSubsystem();
+    output.ssRenderer = rhi.createSubsystem(rhi.getCurrentGraphicsAPI());
     return output;
 }
 
 destroyAppState :: (state: *AppState) {
-    destroyRhiSubsystem(*state.ssRenderer);
-    destroyWindowSubsystem(*state.ssWindow);
+    rhi.destroySubsystem(*state.ssRenderer);
+    window.destroySubsystem(*state.ssWindow);
     free(state);
 }
 
 shouldClose :: (state: *AppState) -> bool {
     return 0 == state.ssWindow.windows.num;
 }
+
+#scope_file
+#import "Basic";
+rhi :: #import "rhi";
+window :: #import "window";

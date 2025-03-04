@@ -1,5 +1,5 @@
-createWindowSubsystem :: () -> WindowSubsystemState {
-    output: WindowSubsystemState;
+createSubsystem :: () -> SubsystemState {
+    output: SubsystemState;
     output.valid = (0 == SDL_Init(.SDL_INIT_VIDEO));
     output.requirements.buffer[0] = .{
         title = "Hello World!\0",
@@ -18,7 +18,7 @@ createWindowSubsystem :: () -> WindowSubsystemState {
     return output;
 }
 
-destroyWindowSubsystem :: (state: *WindowSubsystemState) {
+destroySubsystem :: (state: *SubsystemState) {
     if state.valid {
         SDL_Quit();
     }
@@ -31,12 +31,12 @@ destroyWindowSubsystem :: (state: *WindowSubsystemState) {
     state.windowsToBeClosed = .{};
 }
 
-createNewWindows :: (state: *WindowSubsystemState) {
+createNewWindows :: (state: *SubsystemState) {
     originalCount := state.windows.num;
 
     for i: 0..(state.requirements.num - 1) {
         if state.windows.num >= state.windows.buffer.count {
-            logError("Window Subsystem", "Window limit reached");
+            dbg.logError("Window Subsystem", "Window limit reached");
             break;
         }
 
@@ -77,7 +77,7 @@ createNewWindows :: (state: *WindowSubsystemState) {
     }
 }
 
-pollWindowEvents :: (state: *WindowSubsystemState) {
+pollWindowEvents :: (state: *SubsystemState) {
     WindowStateMapKVP :: struct {
         id: u32;
         window: *WindowState;
@@ -98,7 +98,7 @@ pollWindowEvents :: (state: *WindowSubsystemState) {
             count := state.windows.num;
             for i: 0..(count - 1) {
                 if !tryAdd(*state.windowsToBeClosed, xx i) {
-                    logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
+                    dbg.logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
                 }
             }
         } else if evt.type == .SDL_WINDOWEVENT {
@@ -106,14 +106,14 @@ pollWindowEvents :: (state: *WindowSubsystemState) {
                 windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.windowsToBeClosed, windowStateMapKVP.window.idx) {
-                        logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
+                        dbg.logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
                     }
                 }
             } else if evt.window.event == .SDL_WINDOWEVENT_RESIZED {
                 windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.resizedWindows, windowStateMapKVP.window.idx) {
-                        logError("Window Subsystem", "Failed to add window to resizedWindows buffer");
+                        dbg.logError("Window Subsystem", "Failed to add window to resizedWindows buffer");
                     }
                 }
             }
@@ -122,7 +122,7 @@ pollWindowEvents :: (state: *WindowSubsystemState) {
                 windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.windowsToBeClosed, windowStateMapKVP.window.idx) {
-                        logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
+                        dbg.logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
                     }
                 }
             } else {
@@ -134,7 +134,7 @@ pollWindowEvents :: (state: *WindowSubsystemState) {
     }
 }
 
-destroyClosedWindows :: (state: *WindowSubsystemState) {
+destroyClosedWindows :: (state: *SubsystemState) {
     for i: 0..(state.windowsToBeClosed.num - 1) {
         windowIdx := <<access(*state.windowsToBeClosed, i);
         window := access(*state.windows, windowIdx);
@@ -184,20 +184,6 @@ destroyClosedWindows :: (state: *WindowSubsystemState) {
 #scope_file
 
 logSDLError :: () {
-    strLen :: (s: *u8) -> s32 {
-        count: s32 = 0;
-        while <<s {
-            count += 1;
-            s += 1;
-        }
-
-        return count;
-    }
-
-    errData := SDL_GetError();
-    errCount := strLen(errData);
-    err := string.{ data = errData, count = errCount };
-    if err != "" {
-        logError("Window Subsystem", "SDL Error: %.\n", err);
-    }
+    err := SDL_GetError();
+    dbg.logError("Window Subsystem", "SDL Error: %.\n", to_string(err));
 }

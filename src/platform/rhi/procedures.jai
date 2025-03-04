@@ -2,44 +2,56 @@ getCurrentGraphicsAPI :: () -> GraphicsAPI {
     return .Vulkan;
 }
 
-createRhiSubsystem :: (api: GraphicsAPI) -> RhiSubsystemState {
-    result := RhiSubsystemState.{
+createSubsystem :: (api: GraphicsAPI) -> SubsystemState {
+    result := SubsystemState.{
         api = api,
     };
 
     if api == {
     case .Vulkan;
-        result.graphicsAPIState.vulkan = createVulkanSubsystem();
+        #if ENABLE_VULKAN {
+            result.graphicsAPIState.vulkan = vk.createSubsystem();
+        }
     case .DirectX;
-        result.graphicsAPIState.directX = createDirectXSubsystem();
+        #if ENABLE_DIRECTX {
+            result.graphicsAPIState.directX = dx.createSubsystem();
+        }
     }
 
     return result;
 }
 
-destroyRhiSubsystem :: (state: *RhiSubsystemState) {
+destroySubsystem :: (state: *SubsystemState) {
     if state.api == {
     case .Vulkan;
-        destroyVulkanSubsystem(*state.graphicsAPIState.vulkan);
+        #if ENABLE_VULKAN {
+            vk.destroySubsystem(*state.graphicsAPIState.vulkan);
+        }
     case .DirectX;
-        destroyDirectXSubsystem(*state.graphicsAPIState.directX);
+        #if ENABLE_DIRECTX {
+            dx.destroySubsystem(*state.graphicsAPIState.directX);
+        }
     }
 }
 
-updateRhiSubsystem :: (windowState: *WindowSubsystemState, state: *RhiSubsystemState) {
+updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) {
     // change api if changed
     {
         newApi := getCurrentGraphicsAPI();
         if newApi != state.api {
-            destroyRhiSubsystem(state);
-            <<state = createRhiSubsystem(newApi);
+            destroySubsystem(state);
+            <<state = createSubsystem(newApi);
         }
     }
 
     if state.api == {
     case .Vulkan;
-        updateVulkanSubsystem(windowState, *state.graphicsAPIState.vulkan);
+        #if ENABLE_VULKAN {
+            vk.updateSubsystem(windowState, *state.graphicsAPIState.vulkan);
+        }
     case .DirectX;
-        updateDirectXSubsystem(windowState, *state.graphicsAPIState.directX);
+        #if ENABLE_DIRECTX {
+            dx.updateSubsystem(windowState, *state.graphicsAPIState.directX);
+        }
     }
 }

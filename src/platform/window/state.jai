@@ -1,4 +1,4 @@
-WindowSubsystemState :: struct {
+SubsystemState :: struct {
     valid: bool;
     handleIterator: u64;
     requirements: FixedSizeBuffer(WindowRequirement, 16);

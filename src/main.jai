@@ -1,22 +1,21 @@
-#import "Basic";
-#import "SDL";
-#if OS == .WINDOWS || OS == .LINUX || OS == .ANDROID {
-    #import "Vulkan";
-}
-
 main :: () {
     appState := createAppState();
     defer destroyAppState(appState);
 
     while true {
-        createNewWindows(*appState.ssWindow);
-        pollWindowEvents(*appState.ssWindow);
+        window.createNewWindows(*appState.ssWindow);
+        window.pollWindowEvents(*appState.ssWindow);
 
-        updateRhiSubsystem(*appState.ssWindow, *appState.ssRenderer);
-        destroyClosedWindows(*appState.ssWindow);
+        rhi.updateSubsystem(*appState.ssWindow, *appState.ssRenderer);
+        window.destroyClosedWindows(*appState.ssWindow);
 
         if shouldClose(appState) {
             break;
         }
     }
 }
+
+#scope_file
+#import,file "app_state.jai";
+rhi :: #import "rhi";
+window :: #import "window";

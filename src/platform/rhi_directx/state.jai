@@ -1,1 +1,1 @@
-DirectXSubsystemState :: struct { }
+SubsystemState :: struct { }

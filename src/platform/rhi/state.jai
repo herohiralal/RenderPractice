@@ -1,4 +1,4 @@
-RhiSubsystemState :: struct {
+SubsystemState :: struct {
     api: GraphicsAPI;
     graphicsAPIState: GraphicsAPIState;
 }
@@ -9,6 +9,6 @@ GraphicsAPI :: enum u8 {
 }
 
 GraphicsAPIState :: union {
-    vulkan: VulkanSubsystemState;
-    directX: DirectXSubsystemState;
+    vulkan: vk.SubsystemState;
+    directX: dx.SubsystemState;
 }

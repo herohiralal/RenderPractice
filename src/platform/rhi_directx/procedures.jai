@@ -1,5 +1,5 @@
-createDirectXSubsystem :: () -> DirectXSubsystemState { return .{}; }
+createSubsystem :: () -> SubsystemState { return .{}; }
 
-destroyDirectXSubsystem :: (state: *DirectXSubsystemState) { }
+destroySubsystem :: (state: *SubsystemState) { }
 
-updateDirectXSubsystem :: (windowState: *WindowSubsystemState, state: *DirectXSubsystemState) { }
+updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) { }

@@ -1,4 +1,4 @@
-VulkanSubsystemState :: struct {
+SubsystemState :: struct {
     instance: *void;
     debugCallback: *void;
     selectedDeviceIdx: s32;

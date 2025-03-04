@@ -1,7 +1,7 @@
 SDL_Vulkan_GetInstanceExtensions :: (window: *SDL_Window, pCount: *u32, pNames: **u8) -> s32 #foreign SDL2;
 
-createVulkanSubsystem :: () -> VulkanSubsystemState {
-    state: VulkanSubsystemState;
+createSubsystem :: () -> SubsystemState {
+    state: SubsystemState;
 
     tempWindow := SDL_CreateWindow(
         "temp window to get instance extensions",
@@ -13,23 +13,23 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
     );
     defer SDL_DestroyWindow(tempWindow);
 
-    #if DEBUG {
+    #if RHI_VK_DEBUG {
         layerCount: u32;
         vkEnumerateInstanceLayerProperties(*layerCount, null);
         layersArray := NewArray(layerCount, VkLayerProperties,, allocator = temp);
         vkEnumerateInstanceLayerProperties(*layerCount, layersArray.data);
-        log("VulkanRenderer", .INFO, "Vulkan layers:");
+        dbg.log("VulkanRenderer", .INFO, "Vulkan layers:");
         for layer: layersArray {
-            log("VulkanRenderer", .INFO, "  % (%)", to_string(layer.layerName.data), layer.specVersion);
+            dbg.log("VulkanRenderer", .INFO, "  % (%)", to_string(layer.layerName.data), layer.specVersion);
         }
 
         extensionCount: u32;
         vkEnumerateInstanceExtensionProperties(null, *extensionCount, null);
         extensionsArray := NewArray(extensionCount, VkExtensionProperties,, allocator = temp);
         vkEnumerateInstanceExtensionProperties(null, *extensionCount, extensionsArray.data);
-        log("VulkanRenderer", .INFO, "Vulkan extensions:");
+        dbg.log("VulkanRenderer", .INFO, "Vulkan extensions:");
         for ext: extensionsArray {
-            log("VulkanRenderer", .INFO, "  % (%)", to_string(ext.extensionName.data), ext.specVersion);
+            dbg.log("VulkanRenderer", .INFO, "  % (%)", to_string(ext.extensionName.data), ext.specVersion);
         }
     }
 
@@ -37,16 +37,16 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
     {
         extensionsCount: u32 = 0;
         SDL_Vulkan_GetInstanceExtensions(tempWindow, *extensionsCount, null);
-        extensions: []*u8 = NewArray(extensionsCount + (1 * xx DEBUG), *u8,, allocator = temp);
+        extensions: []*u8 = NewArray(extensionsCount + (1 * xx RHI_VK_DEBUG), *u8,, allocator = temp);
         SDL_Vulkan_GetInstanceExtensions(tempWindow, *extensionsCount, extensions.data);
-        #if DEBUG {
+        #if RHI_VK_DEBUG {
             extensions[extensionsCount] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
             extensionsCount += 1;
         }
 
-        log("VulkanRenderer", .INFO, "Required Vulkan extensions:");
+        dbg.log("VulkanRenderer", .INFO, "Required Vulkan extensions:");
         for ext: extensions {
-            log("VulkanRenderer", .INFO, "  %", to_string(ext));
+            dbg.log("VulkanRenderer", .INFO, "  %", to_string(ext));
         }
 
         appInfo: VkApplicationInfo = .{
@@ -71,7 +71,7 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
         };
 
         debugLayers := *u8.["VK_LAYER_KHRONOS_validation"];
-        #if DEBUG {
+        #if RHI_VK_DEBUG {
             instanceInfo.enabledLayerCount = debugLayers.count;
             instanceInfo.ppEnabledLayerNames = debugLayers.data;
         }
@@ -79,7 +79,7 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
         checkResult(vkCreateInstance(*instanceInfo, null, *instance), "vkCreateInstance");
         state.instance = instance;
 
-        #if DEBUG {
+        #if RHI_VK_DEBUG {
             cbHandle: VkDebugUtilsMessengerEXT = ---;
 
             vkCreateDebugUtilsMessengerEXT: PFN_vkCreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -93,11 +93,11 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
                 ) -> VkBool32 #c_call {
                     push_context {
                         if messageSeverity >= .ERROR_BIT_EXT {
-                            log("VulkanRenderer", .ERROR, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
+                            dbg.log("VulkanRenderer", .ERROR, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
                         } else if messageSeverity >= .WARNING_BIT_EXT {
-                            log("VulkanRenderer", .WARNING, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
+                            dbg.log("VulkanRenderer", .WARNING, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
                         } else {
-                            // log("VulkanRenderer", .INFO, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
+                            // dbg.log("VulkanRenderer", .INFO, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
                             // disabled for now
                         }
                     }
@@ -119,7 +119,7 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
                 state.debugCallback = cbHandle;
             } else {
                 state.debugCallback = null;
-                log("VulkanRenderer", .ERROR, "Failed to get debug report creation function.");
+                dbg.log("VulkanRenderer", .ERROR, "Failed to get debug report creation function.");
             }
         } else {
             state.debugCallback = null;
@@ -129,14 +129,14 @@ createVulkanSubsystem :: () -> VulkanSubsystemState {
     return state;
 }
 
-destroyVulkanSubsystem :: (state: *VulkanSubsystemState) {
-    #if DEBUG {
+destroySubsystem :: (state: *SubsystemState) {
+    #if RHI_VK_DEBUG {
         if state.debugCallback {
             vkDestroyDebugUtilsMessengerEXT: PFN_vkDestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(state.instance, "vkDestroyDebugUtilsMessengerEXT");
             if vkDestroyDebugUtilsMessengerEXT {
                 vkDestroyDebugUtilsMessengerEXT(state.instance, state.debugCallback, null);
             } else {
-                log("VulkanRenderer", .ERROR, "Failed to get debug report destroy function.");
+                dbg.log("VulkanRenderer", .ERROR, "Failed to get debug report destroy function.");
             }
             state.debugCallback = null;
         }
@@ -146,8 +146,4 @@ destroyVulkanSubsystem :: (state: *VulkanSubsystemState) {
     state.instance = null;
 }
 
-updateVulkanSubsystem :: (windowState: *WindowSubsystemState, state: *VulkanSubsystemState) { }
-
-#scope_file
-
-DEBUG :: true;
+updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) { }
