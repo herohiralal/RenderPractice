@@ -1,4 +1,5 @@
 SDL_Vulkan_GetInstanceExtensions :: (window: *SDL_Window, pCount: *u32, pNames: **u8) -> s32 #foreign SDL2;
+SDL_Vulkan_CreateSurface :: (window: *SDL_Window, instance: VkInstance, surface: *VkSurfaceKHR) -> s32 #foreign SDL2;
 
 createSubsystem :: () -> SubsystemState {
     state: SubsystemState;
@@ -18,18 +19,18 @@ createSubsystem :: () -> SubsystemState {
         vkEnumerateInstanceLayerProperties(*layerCount, null);
         layersArray := NewArray(layerCount, VkLayerProperties,, allocator = temp);
         vkEnumerateInstanceLayerProperties(*layerCount, layersArray.data);
-        dbg.log("VulkanRenderer", .INFO, "Vulkan layers:");
+        dbg.log("VulkanRenderer", "Vulkan layers:");
         for layer: layersArray {
-            dbg.log("VulkanRenderer", .INFO, "  % (%)", to_string(layer.layerName.data), layer.specVersion);
+            dbg.log("VulkanRenderer", "  % (%)", to_string(layer.layerName.data), layer.specVersion);
         }
 
         extensionCount: u32;
         vkEnumerateInstanceExtensionProperties(null, *extensionCount, null);
         extensionsArray := NewArray(extensionCount, VkExtensionProperties,, allocator = temp);
         vkEnumerateInstanceExtensionProperties(null, *extensionCount, extensionsArray.data);
-        dbg.log("VulkanRenderer", .INFO, "Vulkan extensions:");
+        dbg.log("VulkanRenderer", "Vulkan extensions:");
         for ext: extensionsArray {
-            dbg.log("VulkanRenderer", .INFO, "  % (%)", to_string(ext.extensionName.data), ext.specVersion);
+            dbg.log("VulkanRenderer", "  % (%)", to_string(ext.extensionName.data), ext.specVersion);
         }
     }
 
@@ -44,9 +45,9 @@ createSubsystem :: () -> SubsystemState {
             extensionsCount += 1;
         }
 
-        dbg.log("VulkanRenderer", .INFO, "Required Vulkan extensions:");
+        dbg.log("VulkanRenderer", "Required Vulkan extensions:");
         for ext: extensions {
-            dbg.log("VulkanRenderer", .INFO, "  %", to_string(ext));
+            dbg.log("VulkanRenderer", "  %", to_string(ext));
         }
 
         appInfo: VkApplicationInfo = .{
@@ -97,7 +98,7 @@ createSubsystem :: () -> SubsystemState {
                         } else if messageSeverity >= .WARNING_BIT_EXT {
                             dbg.log("VulkanRenderer", .WARNING, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
                         } else {
-                            // dbg.log("VulkanRenderer", .INFO, "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
+                            // dbg.log("VulkanRenderer", "VULKAN VALIDATION: %", to_string(pCallbackData.pMessage));
                             // disabled for now
                         }
                     }
@@ -126,10 +127,179 @@ createSubsystem :: () -> SubsystemState {
         }
     }
 
+    windowSurface: VkSurfaceKHR = ---;
+    if !SDL_Vulkan_CreateSurface(tempWindow, instance, *windowSurface) {
+        assert(false, "Failed to create Vulkan surface.");
+    }
+    defer vkDestroySurfaceKHR(instance, windowSurface, null);
+
+    // pick device
+    {
+        physicalDeviceCount: u32 = 0;
+        checkResult(vkEnumeratePhysicalDevices(instance, *physicalDeviceCount, null), "vkEnumeratePhysicalDevices");
+        physicalDevices := NewArray(physicalDeviceCount, VkPhysicalDevice,, allocator = temp);
+        checkResult(vkEnumeratePhysicalDevices(instance, *physicalDeviceCount, physicalDevices.data), "vkEnumeratePhysicalDevices");
+
+        for dev : physicalDevices {
+            properties: VkPhysicalDeviceProperties = ---;
+            vkGetPhysicalDeviceProperties(dev, *properties);
+
+            dbg.log("VulkanRenderer", "Device: %", to_string(properties.deviceName.data));
+
+            if properties.deviceType != .DISCRETE_GPU {
+                continue;
+            }
+
+            features: VkPhysicalDeviceFeatures = ---;
+            vkGetPhysicalDeviceFeatures(dev, *features);
+
+            if !features.geometryShader {
+                continue;
+            }
+
+            physicalDevice := VulkanPhysicalDevice.{
+                device = dev,
+            };
+
+            if !tryAdd(*state.physicalDevices, physicalDevice) {
+                dbg.logError("VulkanRenderer", "Failed to add physical device to list.");
+                break;
+            }
+        }
+
+        if state.physicalDevices.num == 0 {
+            assert(false, "No suitable Vulkan physical devices found.");
+        }
+
+        state.selectedDeviceIdx = 0;
+    }
+
+    // pick queues
+    graphicsIndex, presentIndex := -1, -1;
+    {
+        physicalDevice := cast(VkPhysicalDevice) access(*state.physicalDevices, state.selectedDeviceIdx).device;
+
+        queueFamilyCount: u32 = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, *queueFamilyCount, null);
+        queueFamilies := NewArray(queueFamilyCount, VkQueueFamilyProperties,, allocator = temp);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, *queueFamilyCount, queueFamilies.data);
+
+        for queueFamily, i : queueFamilies {
+            if queueFamily.queueCount > 0 && (queueFamily.queueFlags & .GRAPHICS_BIT) != 0 {
+                graphicsIndex = i;
+            }
+
+            surfaceSupported: VkBool32 = xx false;
+            checkResult(
+                vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, xx i, windowSurface, *surfaceSupported),
+                "vkGetPhysicalDeviceSurfaceSupportKHR"
+            );
+
+            if queueFamily.queueCount > 0 && surfaceSupported {
+                presentIndex = i;
+            }
+
+            if graphicsIndex != -1 && presentIndex != -1 {
+                break;
+            }
+        }
+
+        {
+            physicalDevice: VkPhysicalDevice = access(*state.physicalDevices, state.selectedDeviceIdx).device;
+
+            #if RHI_VK_DEBUG {
+                enabledLayers: []*u8 = .["VK_LAYER_KHRONOS_validation"];
+            } else {
+                enabledLayers: []*u8 = .[];
+            }
+            extensions: []*u8 = .[VK_KHR_SWAPCHAIN_EXTENSION_NAME];
+            queuePriority: []float = .[1];
+            uniqueQueueIndices: FixedSizeBuffer(u32, 2);
+            if graphicsIndex == presentIndex {
+                uniqueQueueIndices.num = 1;
+                uniqueQueueIndices.buffer[0] = xx graphicsIndex;
+            } else {
+                uniqueQueueIndices.num = 2;
+                uniqueQueueIndices.buffer[0] = xx graphicsIndex;
+                uniqueQueueIndices.buffer[1] = xx presentIndex;
+            }
+
+            queueCreateInfos: FixedSizeBuffer(VkDeviceQueueCreateInfo, 2);
+            for i : 0..(uniqueQueueIndices.num - 1) {
+                if !tryAdd(
+                    *queueCreateInfos,
+                    VkDeviceQueueCreateInfo.{
+                        sType = .DEVICE_QUEUE_CREATE_INFO,
+                        pNext = null,
+                        flags = 0,
+                        queueFamilyIndex = uniqueQueueIndices.buffer[i],
+                        queueCount = 1,
+                        pQueuePriorities = queuePriority.data,
+                    }
+                ) {
+                    dbg.logError("VulkanRenderer", "Failed to add queue create info.");
+                    break;
+                }
+            }
+
+            physicalDeviceFeatures := VkPhysicalDeviceFeatures.{
+                geometryShader = xx true,
+                samplerAnisotropy = xx true,
+            };
+
+            deviceCreateInfo := VkDeviceCreateInfo.{
+                sType = .DEVICE_CREATE_INFO,
+                pNext = null,
+                flags = 0,
+                queueCreateInfoCount = xx queueCreateInfos.num,
+                pQueueCreateInfos = *queueCreateInfos.buffer[0],
+                enabledLayerCount = xx enabledLayers.count,
+                ppEnabledLayerNames = enabledLayers.data,
+                enabledExtensionCount = xx extensions.count,
+                ppEnabledExtensionNames = extensions.data,
+                pEnabledFeatures = *physicalDeviceFeatures,
+            };
+
+            device: VkDevice = ---;
+            checkResult(vkCreateDevice(physicalDevice, *deviceCreateInfo, null, *device), "vkCreateDevice");
+
+            graphicsQueue, presentQueue: VkQueue;
+            vkGetDeviceQueue(device, xx graphicsIndex, 0, *graphicsQueue);
+            vkGetDeviceQueue(device, xx presentIndex, 0, *presentQueue);
+
+            state.device = .{
+                device = device,
+                graphicsQueue = graphicsQueue,
+                graphicsQueueIdx = xx graphicsIndex,
+                presentQueue = presentQueue,
+                presentQueueIdx = xx presentIndex,
+            };
+
+            commandPoolCreateInfo := VkCommandPoolCreateInfo.{
+                sType = .COMMAND_POOL_CREATE_INFO,
+                pNext = null,
+                flags = .RESET_COMMAND_BUFFER_BIT | .TRANSIENT_BIT,
+                queueFamilyIndex = state.device.graphicsQueueIdx,
+            };
+
+            commandPool: VkCommandPool = ---;
+            checkResult(vkCreateCommandPool(state.device.device, *commandPoolCreateInfo, null, *commandPool), "vkCreateCommandPool");
+            state.commandPool = xx commandPool;
+        }
+    }
+
     return state;
 }
 
 destroySubsystem :: (state: *SubsystemState) {
+    vkDestroyCommandPool(state.device.device, xx state.commandPool, null);
+    state.commandPool = 0;
+
+    vkDestroyDevice(state.device.device, null);
+    state.device = .{};
+
+    state.physicalDevices = .{};
+
     #if RHI_VK_DEBUG {
         if state.debugCallback {
             vkDestroyDebugUtilsMessengerEXT: PFN_vkDestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(state.instance, "vkDestroyDebugUtilsMessengerEXT");

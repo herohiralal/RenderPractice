@@ -229,19 +229,19 @@ createSubsystem :: proc() -> SubsystemState {
         vk.GetDeviceQueue(device, u32(graphicsIndex), 0, &graphicsQueue)
         vk.GetDeviceQueue(device, u32(presentIndex), 0, &presentQueue)
 
-        commandPoolCreateInfo := vk.CommandPoolCreateInfo {
-            sType            = .COMMAND_POOL_CREATE_INFO,
-            pNext            = nil,
-            flags            = {.RESET_COMMAND_BUFFER, .TRANSIENT},
-            queueFamilyIndex = state.device.graphicsQueueIdx,
-        }
-
         state.device = Device {
             device           = rawptr(device),
             graphicsQueue    = rawptr(graphicsQueue),
             graphicsQueueIdx = u32(graphicsIndex),
             presentQueue     = rawptr(presentQueue),
             presentQueueIdx  = u32(presentIndex),
+        }
+
+        commandPoolCreateInfo := vk.CommandPoolCreateInfo {
+            sType            = .COMMAND_POOL_CREATE_INFO,
+            pNext            = nil,
+            flags            = {.RESET_COMMAND_BUFFER, .TRANSIENT},
+            queueFamilyIndex = state.device.graphicsQueueIdx,
         }
 
         commandPool: vk.CommandPool = ---
