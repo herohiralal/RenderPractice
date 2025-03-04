@@ -1,6 +1,6 @@
 package rhi
 
-import "../rhi_directx"
+import "../rhi_null"
 import "../rhi_vulkan"
 import "../window"
 
@@ -17,7 +17,7 @@ createSubsystem :: proc(api: GraphicsAPI) -> SubsystemState {
         case .Vulkan:
             result.graphicsAPIState.vulkan = rhi_vulkan.createSubsystem()
         case .DirectX:
-            result.graphicsAPIState.directX = rhi_directx.createSubsystem()
+            result.graphicsAPIState.directX = rhi_null.createSubsystem()
     }
 
     return result
@@ -28,7 +28,7 @@ destroySubsystem :: proc(state: ^SubsystemState) {
         case .Vulkan:
             rhi_vulkan.destroySubsystem(&state.graphicsAPIState.vulkan)
         case .DirectX:
-            rhi_directx.destroySubsystem(&state.graphicsAPIState.directX)
+            rhi_null.destroySubsystem(&state.graphicsAPIState.directX)
     }
 }
 
@@ -46,6 +46,6 @@ updateSubsystem :: proc(windowState: ^window.SubsystemState, state: ^SubsystemSt
         case .Vulkan:
             rhi_vulkan.updateSubsystem(windowState, &state.graphicsAPIState.vulkan)
         case .DirectX:
-            rhi_directx.updateSubsystem(windowState, &state.graphicsAPIState.directX)
+            rhi_null.updateSubsystem(windowState, &state.graphicsAPIState.directX)
     }
 }

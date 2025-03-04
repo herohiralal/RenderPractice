@@ -1,4 +1,4 @@
-package rhi_directx
+package rhi_null
 
 import "../window"
 

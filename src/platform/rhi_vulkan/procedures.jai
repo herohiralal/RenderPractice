@@ -147,3 +147,13 @@ destroySubsystem :: (state: *SubsystemState) {
 }
 
 updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) { }
+
+#scope_file
+#import,file "state.jai";
+#import,file "errors.jai";
+#import "Basic";
+#import "collections";
+dbg :: #import "debug";
+#import "SDL";
+#import "Vulkan";
+window :: #import "window";

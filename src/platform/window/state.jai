@@ -33,3 +33,6 @@ WindowEvent :: union {
 //     type: WindowEventType;
 //     // more fields...
 // }
+
+#scope_file
+#import "collections";

@@ -7,30 +7,30 @@ createSubsystem :: (api: GraphicsAPI) -> SubsystemState {
         api = api,
     };
 
-    if api == {
+    if #complete api == {
+    case .Null;
+        result.graphicsAPIState.nil = nl.createSubsystem();
     case .Vulkan;
-        #if ENABLE_VULKAN {
-            result.graphicsAPIState.vulkan = vk.createSubsystem();
-        }
+        result.graphicsAPIState.vulkan = vk.createSubsystem();
     case .DirectX;
-        #if ENABLE_DIRECTX {
-            result.graphicsAPIState.directX = dx.createSubsystem();
-        }
+        result.graphicsAPIState.directX = dx.createSubsystem();
+    case .Metal;
+        result.graphicsAPIState.metal = mt.createSubsystem();
     }
 
     return result;
 }
 
 destroySubsystem :: (state: *SubsystemState) {
-    if state.api == {
+    if #complete state.api == {
+    case .Null;
+        nl.destroySubsystem(*state.graphicsAPIState.nil);
     case .Vulkan;
-        #if ENABLE_VULKAN {
-            vk.destroySubsystem(*state.graphicsAPIState.vulkan);
-        }
+        vk.destroySubsystem(*state.graphicsAPIState.vulkan);
     case .DirectX;
-        #if ENABLE_DIRECTX {
-            dx.destroySubsystem(*state.graphicsAPIState.directX);
-        }
+        dx.destroySubsystem(*state.graphicsAPIState.directX);
+    case .Metal;
+        mt.destroySubsystem(*state.graphicsAPIState.metal);
     }
 }
 
@@ -44,14 +44,18 @@ updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState)
         }
     }
 
-    if state.api == {
+    if #complete state.api == {
+    case .Null;
+        nl.updateSubsystem(windowState, *state.graphicsAPIState.nil);
     case .Vulkan;
-        #if ENABLE_VULKAN {
-            vk.updateSubsystem(windowState, *state.graphicsAPIState.vulkan);
-        }
+        vk.updateSubsystem(windowState, *state.graphicsAPIState.vulkan);
     case .DirectX;
-        #if ENABLE_DIRECTX {
-            dx.updateSubsystem(windowState, *state.graphicsAPIState.directX);
-        }
+        dx.updateSubsystem(windowState, *state.graphicsAPIState.directX);
+    case .Metal;
+        mt.updateSubsystem(windowState, *state.graphicsAPIState.metal);
     }
 }
+
+#scope_file
+#import,file "state.jai";
+window :: #import "window";

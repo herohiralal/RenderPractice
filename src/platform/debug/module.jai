@@ -1,3 +1,7 @@
-#load "logging.jai";
+LogLevel :: logging.LogLevel;
+log :: logging.log;
+logWarning :: logging.logWarning;
+logError :: logging.logError;
 
-#import "Basic";
+#scope_file
+logging :: #import,file "logging.jai";

@@ -1,6 +1,6 @@
 package rhi
 
-import "../rhi_directx"
+import "../rhi_null"
 import "../rhi_vulkan"
 
 SubsystemState :: struct {
@@ -15,5 +15,5 @@ GraphicsAPI :: enum {
 
 GraphicsAPIState :: struct #raw_union {
     vulkan:  rhi_vulkan.SubsystemState,
-    directX: rhi_directx.SubsystemState,
+    directX: rhi_null.SubsystemState,
 }

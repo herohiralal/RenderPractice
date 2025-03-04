@@ -187,3 +187,9 @@ logSDLError :: () {
     err := SDL_GetError();
     dbg.logError("Window Subsystem", "SDL Error: %.\n", to_string(err));
 }
+
+#scope_file
+#import,file "state.jai";
+#import "SDL";
+dbg :: #import "debug";
+#import "collections";

@@ -188,3 +188,8 @@ checkResult :: (result: VkResult, fnName: string) {
 
     assert(false, "Vulkan call failed.");
 }
+
+#scope_file
+#import "Basic";
+dbg :: #import "debug";
+#import "Vulkan";

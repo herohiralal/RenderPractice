@@ -1,3 +1,5 @@
+RHI_VK_DEBUG :: true;
+
 SubsystemState :: struct {
     instance: *void;
     debugCallback: *void;
@@ -47,3 +49,6 @@ VulkanShader :: struct {
     vs, fs: u64;
     layout: u64;
 }
+
+#scope_file
+#import "collections";

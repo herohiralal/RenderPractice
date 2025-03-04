@@ -48,3 +48,6 @@ logWarning :: (cat: string, fmtStr: string, args: ..Any, loc := #caller_location
 logError :: (cat: string, fmtStr: string, args: ..Any, loc := #caller_location) {
     log(cat, .ERROR, fmtStr, ..args, loc = loc);
 }
+
+#scope_file
+#import "Basic";
