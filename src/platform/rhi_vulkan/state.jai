@@ -1,5 +1,6 @@
 VulkanSubsystemState :: struct {
     instance: *void;
+    debugCallback: *void;
     selectedDeviceIdx: s32;
     device: VulkanDevice;
     physicalDevices: FixedSizeBuffer(VulkanPhysicalDevice, 16);

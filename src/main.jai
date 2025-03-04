@@ -9,6 +9,7 @@ main :: () {
         createNewWindows(*appState.ssWindow);
         pollWindowEvents(*appState.ssWindow);
 
+        updateRhiSubsystem(*appState.ssWindow, *appState.ssRenderer);
         destroyClosedWindows(*appState.ssWindow);
 
         if shouldClose(appState) {
