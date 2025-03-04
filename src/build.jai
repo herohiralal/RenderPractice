@@ -1,5 +1,3 @@
-#import "Compiler";
-
 #run {
     defer set_build_options_dc(.{do_output=false});
 
@@ -40,3 +38,7 @@
     add_build_file("app_state.jai", w);
     add_build_file("main.jai", w);
 }
+
+#scope_file
+
+#import "Compiler";

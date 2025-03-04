@@ -1,5 +1,8 @@
 #import "Basic";
 #import "SDL";
+#if OS == .WINDOWS || OS == .LINUX || OS == .ANDROID {
+    #import "Vulkan";
+}
 
 main :: () {
     appState := createAppState();

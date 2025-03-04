@@ -1,5 +1,3 @@
-#import "SDL";
-
 WindowSubsystemState :: struct {
     valid: bool;
     handleIterator: u64;

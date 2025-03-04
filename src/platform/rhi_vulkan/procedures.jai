@@ -1,7 +1,3 @@
-#import "Basic";
-#import "Vulkan";
-#import "SDL";
-
 SDL_Vulkan_GetInstanceExtensions :: (window: *SDL_Window, pCount: *u32, pNames: **u8) -> s32 #foreign SDL2;
 
 createVulkanSubsystem :: () -> VulkanSubsystemState {

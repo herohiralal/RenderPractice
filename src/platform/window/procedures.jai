@@ -1,6 +1,3 @@
-#import "Basic";
-#import "SDL";
-
 createWindowSubsystem :: () -> WindowSubsystemState {
     output: WindowSubsystemState;
     output.valid = (0 == SDL_Init(.SDL_INIT_VIDEO));

@@ -1,6 +1,3 @@
-#import "Basic";
-#import "Print_Color";
-
 LogLevel :: enum {
     INFO;
     WARNING;

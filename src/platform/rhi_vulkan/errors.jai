@@ -1,5 +1,3 @@
-#import "Vulkan";
-
 checkResult :: (result: VkResult, fnName: string) {
     if result == {
         case .SUCCESS;
