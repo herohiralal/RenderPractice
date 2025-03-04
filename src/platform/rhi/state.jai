@@ -17,41 +17,23 @@ GraphicsAPIState :: union {
     metal: mt.SubsystemState;
 }
 
-#if OS == .WINDOWS {
-    ENABLE_VULKAN :: true;
-    ENABLE_DIRECTX :: false; // TODO: Implement DirectX
-    ENABLE_METAL :: false;
-} else #if OS == .LINUX {
-    ENABLE_VULKAN :: true;
-    ENABLE_DIRECTX :: false;
-    ENABLE_METAL :: false;
-} else #if OS == .ANDROID {
-    ENABLE_VULKAN :: true;
-    ENABLE_DIRECTX :: false;
-    ENABLE_METAL :: false;
-} else #if OS == .MACOS {
-    ENABLE_VULKAN :: false;
-    ENABLE_DIRECTX :: false;
-    ENABLE_METAL :: false; // TODO: Implement Metal
-} else {
-    #assert(false, "Unsupported OS");
-}
-
 nl :: #import "rhi_null";
 
-#if ENABLE_VULKAN {
+#if OS == .WINDOWS || OS == .LINUX || OS == .ANDROID {
     vk :: #import "rhi_vulkan";
 } else {
     vk :: #import "rhi_null";
 }
 
-#if ENABLE_DIRECTX {
+// TODO: Implement DirectX
+#if false && (OS == .WINDOWS || OS == .XBOX) {
     dx :: #import "rhi_directx";
 } else {
     dx :: #import "rhi_null";
 }
 
-#if ENABLE_METAL {
+// TODO: Implement Metal
+#if false && (OS == .MACOS) {
     mt :: #import "rhi_metal";
 } else {
     mt :: #import "rhi_null";
