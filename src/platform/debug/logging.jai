@@ -4,36 +4,18 @@ LogLevel :: enum {
     ERROR;
 }
 
-log :: (cat: string, lvl: LogLevel, fmtStr: string, args: ..Any) {
+log :: (cat: string, lvl: LogLevel, fmtStr: string, args: ..Any, loc := #caller_location) {
     fgColor: s32;
     if lvl == {
     case .INFO;
-        fgColor = 39;
+        fgColor = 36;
     case .WARNING;
         fgColor = 33;
     case .ERROR;
         fgColor = 31;
     }
 
-    print("\e[1;%m", fgColor);
-    defer print("\e[0;39m");
-
-    {
-        lvlStr: string;
-
-        if lvl == {
-        case .INFO;
-            lvlStr = "LOG";
-        case .WARNING;
-            lvlStr = "WRN";
-        case .ERROR;
-            lvlStr = "ERR";
-        case;
-            lvlStr = "???";
-        }
-
-        print("[%] ", lvlStr);
-    }
+    print("\e[%m", fgColor);
 
     {
         catMaxLen :: 12;
@@ -52,17 +34,17 @@ log :: (cat: string, lvl: LogLevel, fmtStr: string, args: ..Any) {
     }
 
     print(fmtStr, ..args);
-    print("\n");
+    print("\e[2;3;37m    [at %:%:%]\e[0m\n", loc.fully_pathed_filename, loc.line_number, loc.character_number);
 }
 
-log :: (cat: string, fmtStr: string, args: ..Any) {
-    log(cat, .INFO, fmtStr, ..args);
+log :: (cat: string, fmtStr: string, args: ..Any, loc := #caller_location) {
+    log(cat, .INFO, fmtStr, ..args, loc = loc);
 }
 
-logWarning :: (cat: string, fmtStr: string, args: ..Any) {
-    log(cat, .WARNING, fmtStr, ..args);
+logWarning :: (cat: string, fmtStr: string, args: ..Any, loc := #caller_location) {
+    log(cat, .WARNING, fmtStr, ..args, loc = loc);
 }
 
-logError :: (cat: string, fmtStr: string, args: ..Any) {
-    log(cat, .ERROR, fmtStr, ..args);
+logError :: (cat: string, fmtStr: string, args: ..Any, loc := #caller_location) {
+    log(cat, .ERROR, fmtStr, ..args, loc = loc);
 }
