@@ -6,7 +6,7 @@
     copy_commonly_propagated_fields(get_build_options(), *options);
     options.output_executable_name = "RenderPractice";
     options.output_path = "../bin";
-    options.intermediate_path = "../temp";
+    options.intermediate_path = "../tmp";
     newImportPaths := NewArray(options.import_path.count + 1, string);
     newImportPaths[0] = "./platform/";
     for ip, i : options.import_path {

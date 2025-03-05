@@ -1,10 +1,3 @@
-# Exclude build/ folder
-build/**/*
-
-# Include some items in build/ folder
-!build/vcs.txt
-!build/SDL2.dll
-
 # Exclude bin/ folder
 bin/**/*
 
@@ -16,5 +9,7 @@ bin/**/*
 !bin/vulkan-1.dll
 
 # Exclude temp/ folder
-temp/
+tmp/
+
+# Jai LSP bs
 src/.build/

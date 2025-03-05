@@ -9,15 +9,6 @@
             "args": [],
             "preLaunchTask": "build (jai)",
             "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "run (odin)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/RenderPractice",
-            "args": [],
-            "preLaunchTask": "build (odin)",
-            "cwd": "${workspaceFolder}"
         }
     ]
 }
