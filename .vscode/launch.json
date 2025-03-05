@@ -8,7 +8,16 @@
             "program": "${workspaceFolder}/bin/RenderPractice",
             "args": [],
             "preLaunchTask": "build (jai)",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "logging": {
+                "engineLogging": false,
+                "exceptions": true,
+                "moduleLoad": false,
+                "processExit": true,
+                "programOutput": true,
+                "threadExit": false
+            },
+            "visualizerFile": "${workspaceFolder}/.vscode/jai.natvis"
         }
     ]
 }
