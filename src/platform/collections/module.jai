@@ -2,7 +2,6 @@ FixedSizeBuffer :: fsb.FixedSizeBuffer;
 access :: fsb.access;
 tryInsertAt :: fsb.tryInsertAt;
 tryRemoveAt :: fsb.tryRemoveAt;
-tryRemoveAt :: fsb.tryRemoveAt;
 tryEraseSwapBack :: fsb.tryEraseSwapBack;
 tryAdd :: fsb.tryAdd;
 search :: fsb.search;

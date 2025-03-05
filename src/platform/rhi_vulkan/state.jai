@@ -1,43 +1,43 @@
 RHI_VK_DEBUG :: true;
 
 SubsystemState :: struct {
-    instance: *void;
-    debugCallback: *void;
+    instance: VkInstance;
+    debugCallback: VkDebugUtilsMessengerEXT;
     selectedDeviceIdx: s32;
     device: VulkanDevice;
     physicalDevices: FixedSizeBuffer(VulkanPhysicalDevice, 16);
     windows: FixedSizeBuffer(VulkanWindowState, 16);
-    commandPool: u64;
+    commandPool: VkCommandPool;
     shaders: VulkanShaders;
 }
 
 VulkanDevice :: struct {
-    device: *void;
-    graphicsQueue: *void;
+    device: VkDevice;
+    graphicsQueue: VkQueue;
     graphicsQueueIdx: u32;
-    presentQueue: *void;
+    presentQueue: VkQueue;
     presentQueueIdx: u32;
 }
 
 VulkanPhysicalDevice :: struct {
-    device: *void;
+    device: VkPhysicalDevice;
 }
 
 VulkanWindowState :: struct {
     handle: u64;
-    surface: u64;
-    swapchain: u64;
+    surface: VkSurfaceKHR;
+    swapchain: VkSwapchainKHR;
     width, height: u32;
-    swapchainImageViews: FixedSizeBuffer(u64, 32);
-    swapchainFences: FixedSizeBuffer(u64, 32);
-    depthImage: u64;
-    depthImageMemory: u64;
-    depthImageView: u64;
-    renderPass: u64;
-    framebuffers: FixedSizeBuffer(u64, 32);
-    commandBuffers: FixedSizeBuffer(u64, 32);
-    imageAvailableSemaphore: u64;
-    renderFinishedSemaphore: u64;
+    swapchainImageViews: FixedSizeBuffer(VkImageView, 32);
+    swapchainFences: FixedSizeBuffer(VkFence, 32);
+    depthImage: VkImage;
+    depthImageMemory: VkDeviceMemory;
+    depthImageView: VkImageView;
+    renderPass: VkRenderPass;
+    framebuffers: FixedSizeBuffer(VkFramebuffer, 32);
+    commandBuffers: FixedSizeBuffer(VkCommandBuffer, 32);
+    imageAvailableSemaphore: VkSemaphore;
+    renderFinishedSemaphore: VkSemaphore;
     frameIdx: u32;
 }
 
@@ -46,9 +46,10 @@ VulkanShaders :: struct {
 }
 
 VulkanShader :: struct {
-    vs, fs: u64;
-    layout: u64;
+    vs, fs: VkShaderModule;
+    layout: VkPipelineLayout;
 }
 
 #scope_file
 #import "collections";
+#import "Vulkan";

@@ -1,6 +1,3 @@
-SDL_Vulkan_GetInstanceExtensions :: (window: *SDL_Window, pCount: *u32, pNames: **u8) -> s32 #foreign SDL2;
-SDL_Vulkan_CreateSurface :: (window: *SDL_Window, instance: VkInstance, surface: *VkSurfaceKHR) -> s32 #foreign SDL2;
-
 createSubsystem :: () -> SubsystemState {
     state: SubsystemState;
 
@@ -177,7 +174,7 @@ createSubsystem :: () -> SubsystemState {
     // pick queues
     graphicsIndex, presentIndex := -1, -1;
     {
-        physicalDevice := cast(VkPhysicalDevice) access(*state.physicalDevices, state.selectedDeviceIdx).device;
+        physicalDevice := access(*state.physicalDevices, state.selectedDeviceIdx).device;
 
         queueFamilyCount: u32 = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, *queueFamilyCount, null);
@@ -284,7 +281,7 @@ createSubsystem :: () -> SubsystemState {
 
             commandPool: VkCommandPool = ---;
             checkResult(vkCreateCommandPool(state.device.device, *commandPoolCreateInfo, null, *commandPool), "vkCreateCommandPool");
-            state.commandPool = xx commandPool;
+            state.commandPool = commandPool;
         }
     }
 
@@ -292,8 +289,8 @@ createSubsystem :: () -> SubsystemState {
 }
 
 destroySubsystem :: (state: *SubsystemState) {
-    vkDestroyCommandPool(state.device.device, xx state.commandPool, null);
-    state.commandPool = 0;
+    vkDestroyCommandPool(state.device.device, state.commandPool, null);
+    state.commandPool = null;
 
     vkDestroyDevice(state.device.device, null);
     state.device = .{};
@@ -316,14 +313,107 @@ destroySubsystem :: (state: *SubsystemState) {
     state.instance = null;
 }
 
-updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) { }
+updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState) {
+    shutdownWindowsToBeClosed(windowState, state);
+    initializeNewWindows(windowState, state);
+    processResizedWindows(windowState, state);
+
+    for i: 0..state.windows.num - 1 {
+        rendererWindowState := access(*state.windows, i);
+
+        vkAcquireNextImageKHR(
+            state.device.device,
+            rendererWindowState.swapchain,
+            math.U64_MAX,
+            rendererWindowState.imageAvailableSemaphore,
+            VK_NULL_HANDLE,
+            *rendererWindowState.frameIdx,
+        );
+
+        fence := rendererWindowState.swapchainFences.buffer[rendererWindowState.frameIdx];
+        vkWaitForFences(state.device.device, 1, *fence, VK_TRUE, math.U64_MAX);
+        vkResetFences(state.device.device, 1, *fence);
+        
+        cmdBuff := *rendererWindowState.commandBuffers.buffer[rendererWindowState.frameIdx];
+        image := rendererWindowState.swapchainImageViews.buffer[rendererWindowState.frameIdx];
+        frameBuff := rendererWindowState.framebuffers.buffer[rendererWindowState.frameIdx];
+
+        vkResetCommandBuffer(<< cmdBuff, 0);
+
+        
+        {
+            cmdBeginInfo := VkCommandBufferBeginInfo.{
+                sType = .COMMAND_BUFFER_BEGIN_INFO,
+                pNext = null,
+                flags = .SIMULTANEOUS_USE_BIT,
+                pInheritanceInfo = null,
+            };
+
+            vkBeginCommandBuffer(<< cmdBuff, *cmdBeginInfo);
+            defer vkEndCommandBuffer(<< cmdBuff);
+
+            {
+                clearValues := VkClearValue.[
+                    .{color = .{_float32 = .[0,0,0,1]}},
+                    .{depthStencil = .{depth = 1.0, stencil = 0}},
+                ];
+                renderPassBeginInfo := VkRenderPassBeginInfo.{
+                    sType = .RENDER_PASS_BEGIN_INFO,
+                    pNext = null,
+                    renderPass = rendererWindowState.renderPass,
+                    framebuffer = frameBuff,
+                    renderArea = .{
+                        offset = .{x = 0, y = 0},
+                        extent = .{width = rendererWindowState.width, height = rendererWindowState.height},
+                    },
+                    clearValueCount = clearValues.count,
+                    pClearValues = clearValues.data,
+                };
+
+                vkCmdBeginRenderPass(<< cmdBuff, *renderPassBeginInfo, .INLINE);
+                defer vkCmdEndRenderPass(<< cmdBuff);
+            }
+        }
+
+        pipelineStageFlag: VkPipelineStageFlags = .TRANSFER_BIT;
+        submitInfo := VkSubmitInfo.{
+            sType = .SUBMIT_INFO,
+            pNext = null,
+            waitSemaphoreCount = 1,
+            pWaitSemaphores = *rendererWindowState.imageAvailableSemaphore,
+            pWaitDstStageMask = *pipelineStageFlag,
+            commandBufferCount = 1,
+            pCommandBuffers = cmdBuff,
+            signalSemaphoreCount = 1,
+            pSignalSemaphores = *rendererWindowState.renderFinishedSemaphore,
+        };
+
+        vkQueueSubmit(state.device.graphicsQueue, 1, *submitInfo, fence);
+
+        presentInfo := VkPresentInfoKHR.{
+            sType = .PRESENT_INFO_KHR,
+            pNext = null,
+            waitSemaphoreCount = 1,
+            pWaitSemaphores = *rendererWindowState.renderFinishedSemaphore,
+            swapchainCount = 1,
+            pSwapchains = *rendererWindowState.swapchain,
+            pImageIndices = *rendererWindowState.frameIdx,
+            pResults = null,
+        };
+
+        vkQueuePresentKHR(state.device.presentQueue, *presentInfo);
+        vkQueueWaitIdle(state.device.presentQueue);
+    }
+}
 
 #scope_file
 #import,file "state.jai";
 #import,file "errors.jai";
+#import,file "window_lifetime.jai";
 #import "Basic";
 #import "collections";
 dbg :: #import "debug";
+math :: #import "Math";
 #import "SDL";
 #import "Vulkan";
 window :: #import "window";

@@ -19,7 +19,7 @@ WindowState :: struct {
     handle: u64;
     valid: bool;
     idx: u32;
-    ptr: *void;
+    ptr: *SDL_Window;
 }
 
 WindowEventType :: enum u8 { }
@@ -36,3 +36,4 @@ WindowEvent :: union {
 
 #scope_file
 #import "collections";
+#import "SDL";
