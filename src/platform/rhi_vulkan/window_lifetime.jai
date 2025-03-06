@@ -5,17 +5,17 @@ SDL_Vulkan_GetDrawableSize :: (window: *SDL_Window, w: *s32, h: *s32) -> void #f
 shutdownWindowsToBeClosed :: (windowState2: *window.SubsystemState, state: *SubsystemState) {
     instance: VkInstance = state.instance;
     for i : 0..(windowState2.windowsToBeClosed.num - 1) {
-        windowIdx := << (access(*windowState2.windowsToBeClosed, i));
+        windowIdx := access(*windowState2.windowsToBeClosed, i).*;
         windowState := access(*windowState2.windows, windowIdx);
 
-        rendererWindowStatePtr, rwsIdx := search(*state.windows, *windowState.handle, (ws, h) => ws.handle == (<< h));
+        rendererWindowStatePtr, rwsIdx := search(*state.windows, *windowState.handle, (ws, h) => ws.handle == h.*);
 
         if !rendererWindowStatePtr {
             // window was never initialised for renderer successfully
             continue;
         }
 
-        rendererWindowState := << rendererWindowStatePtr;
+        rendererWindowState := rendererWindowStatePtr.*;
         tryEraseSwapBack(*state.windows, rwsIdx);
 
         vkDestroySemaphore(state.device.device, rendererWindowState.renderFinishedSemaphore, null);
@@ -27,7 +27,7 @@ shutdownWindowsToBeClosed :: (windowState2: *window.SubsystemState, state: *Subs
             *rendererWindowState.commandBuffers.buffer[0],
         );
         for i: 0..(rendererWindowState.framebuffers.num - 1) {
-            framebuffer := << access(*rendererWindowState.framebuffers, i);
+            framebuffer := access(*rendererWindowState.framebuffers, i).*;
             vkDestroyFramebuffer(state.device.device, framebuffer, null);
         }
         rendererWindowState.framebuffers = .{};
@@ -36,12 +36,12 @@ shutdownWindowsToBeClosed :: (windowState2: *window.SubsystemState, state: *Subs
         vkDestroyImage(state.device.device, rendererWindowState.depthImage, null);
         vkFreeMemory(state.device.device, rendererWindowState.depthImageMemory, null);
         for i: 0..(rendererWindowState.swapchainFences.num - 1) {
-            fence := << access(*rendererWindowState.swapchainFences, i);
+            fence := access(*rendererWindowState.swapchainFences, i).*;
             vkDestroyFence(state.device.device, fence, null);
         }
         rendererWindowState.swapchainFences = .{};
         for i: 0..(rendererWindowState.swapchainImageViews.num - 1) {
-            imageView := << access(*rendererWindowState.swapchainImageViews, i);
+            imageView := access(*rendererWindowState.swapchainImageViews, i).*;
             vkDestroyImageView(state.device.device, imageView, null);
         }
         rendererWindowState.swapchainImageViews = .{};
@@ -54,7 +54,7 @@ initializeNewWindows :: (windowState2: *window.SubsystemState, state: *Subsystem
     instance: VkInstance = state.instance;
 
     for i: 0..(windowState2.createdWindows.num - 1) {
-        windowIdx := << access(*windowState2.createdWindows, i);
+        windowIdx := access(*windowState2.createdWindows, i).*;
         windowState := access(*windowState2.windows, windowIdx);
 
         windowPtr := windowState.ptr;

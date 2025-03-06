@@ -40,7 +40,7 @@ updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState)
         newApi := getCurrentGraphicsAPI();
         if newApi != state.api {
             destroySubsystem(state);
-            <<state = createSubsystem(newApi);
+            state.* = createSubsystem(newApi);
         }
     }
 

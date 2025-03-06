@@ -103,14 +103,14 @@ pollWindowEvents :: (state: *SubsystemState) {
             }
         } else if evt.type == .SDL_WINDOWEVENT {
             if evt.window.event == .SDL_WINDOWEVENT_CLOSE {
-                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
+                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => id.* == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.windowsToBeClosed, windowStateMapKVP.window.idx) {
                         dbg.logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
                     }
                 }
             } else if evt.window.event == .SDL_WINDOWEVENT_RESIZED {
-                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
+                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => id.* == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.resizedWindows, windowStateMapKVP.window.idx) {
                         dbg.logError("Window Subsystem", "Failed to add window to resizedWindows buffer");
@@ -119,7 +119,7 @@ pollWindowEvents :: (state: *SubsystemState) {
             }
         } else if evt.type == .SDL_KEYUP {
             if evt.key.keysym.sym == .SDLK_ESCAPE {
-                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => (<<id) == wsm.id);
+                windowStateMapKVP, _ := search(*windowMap, *evt.window.windowID, (wsm, id) => id.* == wsm.id);
                 if windowStateMapKVP {
                     if !tryAdd(*state.windowsToBeClosed, windowStateMapKVP.window.idx) {
                         dbg.logError("Window Subsystem", "Failed to add window to windowsToBeClosed buffer");
@@ -136,7 +136,7 @@ pollWindowEvents :: (state: *SubsystemState) {
 
 destroyClosedWindows :: (state: *SubsystemState) {
     for i: 0..(state.windowsToBeClosed.num - 1) {
-        windowIdx := <<access(*state.windowsToBeClosed, i);
+        windowIdx := access(*state.windowsToBeClosed, i).*;
         window := access(*state.windows, windowIdx);
         SDL_DestroyWindow(window.ptr);
         window.valid = false;
@@ -170,13 +170,13 @@ destroyClosedWindows :: (state: *SubsystemState) {
     // udpate the window indices
     for i: 0..(state.windows.num - 1) {
         window := access(*state.windows, i);
-        kvp, _ := search(*windowMap, *window.idx, (wmmPtr, idxPtr) => (<<idxPtr) == wmmPtr.src);
+        kvp, _ := search(*windowMap, *window.idx, (wmmPtr, idxPtr) => idxPtr.* == wmmPtr.src);
         window.idx = kvp.dst;
     }
 
     for i: 0..(state.createdWindows.num - 1) {
-        windowIdx := <<access(*state.createdWindows, i);
-        kvp, _ := search(*windowMap, *windowIdx, (wmmPtr, idxPtr) => (<<idxPtr) == wmmPtr.src);
+        windowIdx := access(*state.createdWindows, i).*;
+        kvp, _ := search(*windowMap, *windowIdx, (wmmPtr, idxPtr) => idxPtr.* == wmmPtr.src);
         access(*state.windows, windowIdx).idx = kvp.dst;
     }
 }

@@ -338,7 +338,7 @@ updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState)
         image := rendererWindowState.swapchainImageViews.buffer[rendererWindowState.frameIdx];
         frameBuff := rendererWindowState.framebuffers.buffer[rendererWindowState.frameIdx];
 
-        vkResetCommandBuffer(<< cmdBuff, 0);
+        vkResetCommandBuffer(cmdBuff.*, 0);
 
         
         {
@@ -349,8 +349,8 @@ updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState)
                 pInheritanceInfo = null,
             };
 
-            vkBeginCommandBuffer(<< cmdBuff, *cmdBeginInfo);
-            defer vkEndCommandBuffer(<< cmdBuff);
+            vkBeginCommandBuffer(cmdBuff.*, *cmdBeginInfo);
+            defer vkEndCommandBuffer(cmdBuff.*);
 
             {
                 clearValues := VkClearValue.[
@@ -370,8 +370,8 @@ updateSubsystem :: (windowState: *window.SubsystemState, state: *SubsystemState)
                     pClearValues = clearValues.data,
                 };
 
-                vkCmdBeginRenderPass(<< cmdBuff, *renderPassBeginInfo, .INLINE);
-                defer vkCmdEndRenderPass(<< cmdBuff);
+                vkCmdBeginRenderPass(cmdBuff.*, *renderPassBeginInfo, .INLINE);
+                defer vkCmdEndRenderPass(cmdBuff.*);
             }
         }
 
