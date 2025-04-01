@@ -2,6 +2,40 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build (odin)",
+            "type": "shell",
+            "command": "odin",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/",
+                "-debug",
+                "-out:${workspaceFolder}/build/RenderPractice.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": {
+                "owner": "odin",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.*)(\\((\\d+):(\\d+)\\))\\s+Error:\\s+(.*)$",
+                    "file": 1,
+                    "line": 3,
+                    "column": 4,
+                    "message": 5
+                }
+            }
+        },
+        {
             "label": "build (jai)",
             "type": "shell",
             "command": "jai",

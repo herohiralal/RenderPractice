@@ -18,6 +18,15 @@
                 "threadExit": false
             },
             "visualizerFile": "${workspaceFolder}/.vscode/jai.natvis"
+        },
+        {
+            "name": "run (odin)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/RenderPractice",
+            "args": [],
+            "preLaunchTask": "build (odin)",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
